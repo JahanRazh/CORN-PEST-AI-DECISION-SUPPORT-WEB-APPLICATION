@@ -1,0 +1,33 @@
+# --- Secrets / credentials ---
+.env
+serviceAccountKey.json
+*.pem
+*.key
+
+# --- Python ---
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# --- Instance data (runtime state, uploads, local DB) ---
+instance/
+
+# --- Large model artifacts (regenerate with scripts/setup_artifacts.py) ---
+model/*.keras
+model/*.npz
+model/model_metrics.json
+model/model_metadata.json
+
+# --- Node (build-time only, for Tailwind CSS compilation) ---
+node_modules/
+package-lock.json
+
+# --- OS / editor ---
+Thumbs.db
+.DS_Store
+.idea/
+.vscode/
