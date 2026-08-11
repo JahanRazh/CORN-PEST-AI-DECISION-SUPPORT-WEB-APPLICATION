@@ -1,0 +1,446 @@
+{% extends "base.html" %}
+{% block title %}Model performance{% endblock %}
+
+{% block content %}
+<section class="border-b border-soil-200 bg-white">
+  <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight text-soil-900">Model performance dashboard</h1>
+        <p class="mt-1 max-w-2xl text-sm text-soil-500">
+          Held-out test-set evaluation of the EfficientNetB0 classifier, plus the expert mapping
+          coverage and live usage of the deployed system.
+        </p>
+      </div>
+      {% if metrics.available %}
+        <span class="rounded-lg border border-soil-200 bg-soil-50 px-3 py-2 font-mono text-[11px] text-soil-500">
+          source: {{ metrics.source }}
+        </span>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<div class="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
+
+  {% if not metrics.available %}
+    <div class="rounded-2xl border border-amber-200 bg-amber-50 p-6">
+      <h2 class="text-base font-bold text-amber-900">No evaluation report is available</h2>
+      <p class="mt-1.5 text-sm leading-relaxed text-amber-800">{{ metrics.error }}</p>
+      <p class="mt-3 text-xs text-amber-700">
+        Run <span class="rounded bg-white px-1.5 py-0.5 font-mono">python scripts/setup_artifacts.py</span>
+        to generate <span class="font-mono">model/model_metrics.json</span> from the training output.
+      </p>
+    </div>
+  {% else %}
+
+    <!-- ==================== Headline metrics ==================== -->
+    <section>
+      <h2 class="text-sm font-bold uppercase tracking-wide text-soil-400">Test set performance</h2>
+      <dl class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        {% set headline = metrics.headline %}
+        {% set cards = [
+          ('Accuracy', headline.accuracy, 'from-leaf-500 to-leaf-700', 'Correct predictions over all test images'),
+          ('Precision', headline.precision, 'from-sky-500 to-sky-700', 'Of images called a class, how many were'),
+          ('Recall', headline.recall, 'from-violet-500 to-violet-700', 'Of images of a class, how many were found'),
+          ('F1 score', headline.f1_score, 'from-corn-500 to-corn-700', 'Harmonic mean of precision and recall')
+        ] %}
+        {% for label, value, gradient, blurb in cards %}
+          <div class="overflow-hidden rounded-2xl border border-soil-200 bg-white">
+            <div class="bg-gradient-to-br {{ gradient }} px-5 py-4 text-white">
+              <dt class="text-[11px] font-semibold uppercase tracking-wider opacity-90">{{ label }}</dt>
+              <dd class="mt-1 text-3xl font-extrabold">
+                {% if value is not none %}{{ '%.2f'|format(value) }}<span class="text-lg">%</span>{% else %}n/a{% endif %}
+              </dd>
+            </div>
+            <p class="px-5 py-3 text-[11px] leading-relaxed text-soil-500">{{ blurb }}</p>
+          </div>
+        {% endfor %}
+
+        <div class="rounded-2xl border border-soil-200 bg-white p-5">
+          <dt class="text-[11px] font-semibold uppercase tracking-wider text-soil-400">Evaluation setup</dt>
+          <dd class="mt-2 space-y-1.5 text-xs text-soil-600">
+            <p>Test loss <span class="font-mono font-semibold text-soil-900">{{ '%.4f'|format(headline.test_loss) if headline.test_loss is not none else 'n/a' }}</span></p>
+            <p>Classes <span class="font-mono font-semibold text-soil-900">{{ headline.num_classes or metrics.class_names|length }}</span></p>
+            <p>Input <span class="font-mono font-semibold text-soil-900">{{ headline.image_size or '224 x 224' }}</span></p>
+            {% if metrics.averages.weighted %}
+              <p class="border-t border-soil-100 pt-1.5">Weighted F1 <span class="font-mono font-semibold text-soil-900">{{ '%.2f'|format(metrics.averages.weighted.f1_score) }}%</span></p>
+              <p>{{ metrics.averages.weighted.support }} test images</p>
+            {% endif %}
+          </dd>
+        </div>
+      </dl>
+    </section>
+
+    <!-- ==================== Per-class ==================== -->
+    <section class="grid gap-6 lg:grid-cols-3">
+      <div class="rounded-2xl border border-soil-200 bg-white lg:col-span-2">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-soil-200 px-6 py-4">
+          <div>
+            <h2 class="text-base font-bold tracking-tight text-soil-900">Per-class performance</h2>
+            <p class="text-xs text-soil-500">Click a column heading to sort.</p>
+          </div>
+          <div class="flex items-center gap-3 text-[11px] text-soil-500">
+            {% for label, colour in [('Precision','bg-sky-500'), ('Recall','bg-violet-500'), ('F1','bg-leaf-600')] %}
+              <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full {{ colour }}"></span>{{ label }}</span>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="overflow-x-auto thin-scroll">
+          <table class="w-full text-left text-sm" id="perClassTable">
+            <thead class="border-b border-soil-200 bg-soil-50 text-[11px] uppercase tracking-wide text-soil-500">
+              <tr>
+                <th scope="col" class="cursor-pointer px-6 py-3 font-semibold hover:text-soil-800" data-sort="0" data-type="text">Class</th>
+                <th scope="col" class="cursor-pointer px-4 py-3 font-semibold hover:text-soil-800" data-sort="1" data-type="number">Precision</th>
+                <th scope="col" class="cursor-pointer px-4 py-3 font-semibold hover:text-soil-800" data-sort="2" data-type="number">Recall</th>
+                <th scope="col" class="cursor-pointer px-4 py-3 font-semibold hover:text-soil-800" data-sort="3" data-type="number">F1</th>
+                <th scope="col" class="cursor-pointer px-4 py-3 font-semibold hover:text-soil-800" data-sort="4" data-type="number">Support</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-soil-100">
+              {% for row in metrics.per_class %}
+                <tr class="hover:bg-soil-50/60">
+                  <td class="px-6 py-3">
+                    <span class="font-semibold text-soil-900">{{ row.class_name|shortclass }}</span>
+                    <span class="block text-[11px] italic text-soil-400">{{ row.class_name|sciname }}</span>
+                  </td>
+                  {% for value, colour in [(row.precision, 'bg-sky-500'), (row.recall, 'bg-violet-500'), (row.f1_score, 'bg-leaf-600')] %}
+                    <td class="px-4 py-3" data-value="{{ value }}">
+                      <span class="font-mono text-xs font-semibold {{ 'text-red-600' if value < 85 else 'text-soil-800' }}">{{ '%.1f'|format(value) }}</span>
+                      <span class="mt-1 block h-1.5 w-16 overflow-hidden rounded-full bg-soil-100">
+                        <span class="meter-fill block h-full rounded-full {{ colour }}" style="width:0%" data-meter="{{ value }}"></span>
+                      </span>
+                    </td>
+                  {% endfor %}
+                  <td class="px-4 py-3 font-mono text-xs text-soil-500" data-value="{{ row.support }}">{{ row.support }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+            {% if metrics.averages %}
+              <tfoot class="border-t-2 border-soil-200 bg-soil-50 text-xs">
+                {% for label, key in [('Macro average', 'macro'), ('Weighted average', 'weighted')] %}
+                  {% if metrics.averages[key] %}
+                    {% set avg = metrics.averages[key] %}
+                    <tr>
+                      <td class="px-6 py-2.5 font-semibold text-soil-700">{{ label }}</td>
+                      <td class="px-4 py-2.5 font-mono font-semibold text-soil-800">{{ '%.2f'|format(avg.precision) }}</td>
+                      <td class="px-4 py-2.5 font-mono font-semibold text-soil-800">{{ '%.2f'|format(avg.recall) }}</td>
+                      <td class="px-4 py-2.5 font-mono font-semibold text-soil-800">{{ '%.2f'|format(avg.f1_score) }}</td>
+                      <td class="px-4 py-2.5 font-mono text-soil-500">{{ avg.support }}</td>
+                    </tr>
+                  {% endif %}
+                {% endfor %}
+              </tfoot>
+            {% endif %}
+          </table>
+        </div>
+      </div>
+
+      <!-- Strongest / weakest -->
+      <div class="space-y-6">
+        {% if extremes.strongest %}
+          <div class="rounded-2xl border border-leaf-200 bg-white p-5">
+            <h2 class="text-sm font-bold text-leaf-900">Strongest classes</h2>
+            <ul class="mt-3 space-y-2.5">
+              {% for row in extremes.strongest %}
+                <li class="flex items-center justify-between gap-3 text-[13px]">
+                  <span class="min-w-0 truncate text-soil-700" title="{{ row.class_name }}">{{ row.class_name|shortclass }}</span>
+                  <span class="shrink-0 rounded bg-leaf-50 px-1.5 py-0.5 font-mono text-xs font-bold text-leaf-700">{{ '%.1f'|format(row.f1_score) }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+
+        {% if extremes.weakest %}
+          <div class="rounded-2xl border border-amber-200 bg-white p-5">
+            <h2 class="text-sm font-bold text-amber-900">Weakest classes</h2>
+            <p class="mt-1 text-xs leading-relaxed text-soil-500">
+              These drive the top-2 margin signal in the OOD layer: where the model is least
+              separable, abstaining is preferable to guessing.
+            </p>
+            <ul class="mt-3 space-y-2.5">
+              {% for row in extremes.weakest %}
+                <li class="flex items-center justify-between gap-3 text-[13px]">
+                  <span class="min-w-0 truncate text-soil-700" title="{{ row.class_name }}">{{ row.class_name|shortclass }}</span>
+                  <span class="shrink-0 rounded bg-amber-50 px-1.5 py-0.5 font-mono text-xs font-bold text-amber-700">{{ '%.1f'|format(row.f1_score) }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+      </div>
+    </section>
+
+    <!-- ==================== Confusion matrix ==================== -->
+    {% if metrics.confusion_matrix %}
+      <section class="rounded-2xl border border-soil-200 bg-white">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-soil-200 px-6 py-4">
+          <div>
+            <h2 class="text-base font-bold tracking-tight text-soil-900">Confusion matrix</h2>
+            <p class="text-xs text-soil-500">Rows are the true class, columns the prediction. Hover any cell for detail.</p>
+          </div>
+          <div class="flex items-center gap-2 text-[11px] text-soil-500">
+            <span>Low</span>
+            <span class="h-3 w-24 rounded bg-gradient-to-r from-leaf-50 to-leaf-800"></span>
+            <span>High</span>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto thin-scroll p-6">
+          <table class="border-collapse text-xs" id="confusionMatrix">
+            <thead>
+              <tr>
+                <th class="sticky left-0 z-10 bg-white p-2"></th>
+                {% for name in metrics.class_names %}
+                  <th class="p-1 align-bottom">
+                    <span class="cm-vertical block text-[10px] font-medium text-soil-500" title="{{ name }}">{{ name|shortclass }}</span>
+                  </th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in metrics.confusion_matrix %}
+                {% set row_total = row|sum or 1 %}
+                <tr>
+                  <th scope="row" class="sticky left-0 z-10 whitespace-nowrap bg-white pr-3 text-right text-[11px] font-medium text-soil-600" title="{{ metrics.class_names[loop.index0] }}">
+                    {{ metrics.class_names[loop.index0]|shortclass }}
+                  </th>
+                  {% set outer = loop %}
+                  {% for count in row %}
+                    {% set share = count / row_total %}
+                    {% set diagonal = outer.index0 == loop.index0 %}
+                    <td class="p-0.5">
+                      <div class="cm-cell grid h-9 w-9 cursor-default place-items-center rounded font-mono text-[11px] font-semibold
+                                  {% if count == 0 %}bg-soil-50 text-soil-300
+                                  {% elif diagonal %}text-white
+                                  {% else %}bg-red-100 text-red-800{% endif %}"
+                           {% if diagonal and count > 0 %}style="background-color: rgba(22,101,52,{{ (0.25 + share * 0.75)|round(2) }})"{% endif %}
+                           title="True {{ metrics.class_names[outer.index0] }} → predicted {{ metrics.class_names[loop.index0] }}: {{ count }} image{{ '' if count == 1 else 's' }} ({{ (share * 100)|round(1) }}%)">
+                        {{ count }}
+                      </div>
+                    </td>
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        {% if confusions %}
+          <div class="border-t border-soil-200 px-6 py-5">
+            <h3 class="text-sm font-bold text-soil-900">Most-confused pairs</h3>
+            <ul class="mt-3 grid gap-2 sm:grid-cols-2">
+              {% for pair in confusions %}
+                <li class="flex items-center gap-2 rounded-lg border border-soil-200 px-3 py-2 text-xs">
+                  <span class="min-w-0 flex-1 truncate text-soil-700" title="{{ pair.true_class }}">{{ pair.true_class|shortclass }}</span>
+                  <svg class="h-3.5 w-3.5 shrink-0 text-soil-300" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                  <span class="min-w-0 flex-1 truncate text-soil-700" title="{{ pair.predicted_class }}">{{ pair.predicted_class|shortclass }}</span>
+                  <span class="shrink-0 rounded bg-red-50 px-1.5 py-0.5 font-mono font-bold text-red-700">{{ pair.count }}</span>
+                  <span class="shrink-0 font-mono text-[10px] text-soil-400">{{ pair.rate }}%</span>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+      </section>
+    {% endif %}
+
+    <!-- ==================== Training curves ==================== -->
+    {% if metrics.history or metrics.graphs.accuracy or metrics.graphs.loss %}
+      <section class="grid gap-6 lg:grid-cols-2">
+        {% if metrics.history %}
+          <div class="rounded-2xl border border-soil-200 bg-white p-6">
+            <h2 class="text-base font-bold tracking-tight text-soil-900">Accuracy across training</h2>
+            <p class="text-xs text-soil-500">{{ metrics.history|length }} epochs, transfer learning then fine-tuning.</p>
+            <div class="mt-4" id="accuracyChart" data-series="accuracy"></div>
+          </div>
+          <div class="rounded-2xl border border-soil-200 bg-white p-6">
+            <h2 class="text-base font-bold tracking-tight text-soil-900">Loss across training</h2>
+            <p class="text-xs text-soil-500">A widening train/validation gap would indicate overfitting.</p>
+            <div class="mt-4" id="lossChart" data-series="loss"></div>
+          </div>
+        {% else %}
+          {% for key, label in [('accuracy', 'Accuracy'), ('loss', 'Loss')] %}
+            {% if metrics.graphs[key] %}
+              <div class="rounded-2xl border border-soil-200 bg-white p-6">
+                <h2 class="text-base font-bold tracking-tight text-soil-900">{{ label }} across training</h2>
+                <img src="{{ url_for('main.result_asset', filename=key ~ '_graph.png') }}" alt="{{ label }} curve from training" class="mt-4 w-full rounded-lg border border-soil-100">
+              </div>
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+      </section>
+
+      {% if metrics.history %}
+        <script id="historyData" type="application/json">{{ metrics.history|tojson }}</script>
+      {% endif %}
+    {% endif %}
+  {% endif %}
+
+  <!-- ==================== Expert mapping coverage ==================== -->
+  {% if coverage %}
+    <section class="rounded-2xl border border-soil-200 bg-white">
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-soil-200 px-6 py-4">
+        <div>
+          <h2 class="text-base font-bold tracking-tight text-soil-900">Expert mapping coverage</h2>
+          <p class="text-xs text-soil-500">
+            Whether each model class resolves to a knowledge base entry &mdash; the validation layer between
+            identification and recommendation.
+          </p>
+        </div>
+        <div class="flex gap-2 text-[11px]">
+          <span class="rounded-full bg-leaf-50 px-2.5 py-1 font-semibold text-leaf-700">{{ coverage.mapped }}/{{ coverage.total_classes }} mapped</span>
+          {% if coverage.with_warnings %}
+            <span class="rounded-full bg-amber-50 px-2.5 py-1 font-semibold text-amber-700">{{ coverage.with_warnings }} with notes</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="overflow-x-auto thin-scroll">
+        <table class="w-full text-left text-sm">
+          <thead class="border-b border-soil-200 bg-soil-50 text-[11px] uppercase tracking-wide text-soil-500">
+            <tr>
+              <th scope="col" class="px-6 py-3 font-semibold">Model class</th>
+              <th scope="col" class="px-4 py-3 font-semibold">Resolves to</th>
+              <th scope="col" class="px-4 py-3 font-semibold">Method</th>
+              <th scope="col" class="px-4 py-3 font-semibold">Products</th>
+              <th scope="col" class="px-4 py-3 font-semibold">Status</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-soil-100">
+            {% for row in coverage.rows %}
+              <tr class="hover:bg-soil-50/60">
+                <td class="px-6 py-3 font-mono text-xs text-soil-600">{{ row.ai_class }}</td>
+                <td class="px-4 py-3">
+                  <span class="font-semibold text-soil-900">{{ row.display_name }}</span>
+                  {% if row.scientific_name %}
+                    <span class="block text-[11px] italic text-soil-400">{{ row.scientific_name }}</span>
+                  {% endif %}
+                </td>
+                <td class="px-4 py-3 text-xs text-soil-500">{{ row.match_method }}</td>
+                <td class="px-4 py-3 font-mono text-xs text-soil-600">{{ row.product_count }}</td>
+                <td class="px-4 py-3">
+                  {% if not row.matched %}
+                    <span class="rounded bg-red-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-700">Unmatched</span>
+                  {% elif row.has_warnings %}
+                    <span class="rounded bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700">Note</span>
+                  {% else %}
+                    <span class="rounded bg-leaf-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-leaf-700">Matched</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  {% endif %}
+
+  <!-- ==================== Live usage ==================== -->
+  <section class="grid gap-6 lg:grid-cols-3">
+    <div class="rounded-2xl border border-soil-200 bg-white p-6 lg:col-span-2">
+      <h2 class="text-base font-bold tracking-tight text-soil-900">Deployed system usage</h2>
+      <p class="text-xs text-soil-500">Aggregated from saved Firestore records, including rejected images.</p>
+
+      {% if not usage.available %}
+        <p class="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
+          Usage statistics need Firestore. {{ usage.error }}
+        </p>
+      {% elif not usage.total %}
+        <p class="mt-4 rounded-lg border border-dashed border-soil-300 px-4 py-6 text-center text-xs text-soil-500">
+          No detections recorded yet.
+        </p>
+      {% else %}
+        <dl class="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+          {% for value, label, tone in [
+            (usage.total, 'Analyses', 'text-soil-900'),
+            (usage.accepted, 'Identified', 'text-leaf-700'),
+            (usage.rejected, 'Rejected', 'text-red-600'),
+            ((usage.rejection_rate ~ '%'), 'Rejection rate', 'text-sky-700')
+          ] %}
+            <div class="rounded-xl bg-soil-50 px-4 py-3">
+              <dt class="text-[10px] font-medium uppercase tracking-wide text-soil-400">{{ label }}</dt>
+              <dd class="mt-0.5 text-xl font-bold {{ tone }}">{{ value }}</dd>
+            </div>
+          {% endfor %}
+        </dl>
+
+        {% if usage.by_pest %}
+          <h3 class="mt-6 text-xs font-bold uppercase tracking-wide text-soil-400">Pests identified in the field</h3>
+          <ul class="mt-3 space-y-2.5">
+            {% set most = usage.by_pest.values()|list|max %}
+            {% for name, count in usage.by_pest.items() %}
+              <li>
+                <div class="flex items-baseline justify-between gap-2 text-xs">
+                  <span class="truncate text-soil-700">{{ name }}</span>
+                  <span class="shrink-0 font-mono font-semibold text-soil-800">{{ count }}</span>
+                </div>
+                <div class="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-soil-100">
+                  <div class="meter-fill h-full rounded-full bg-leaf-600" style="width:0%" data-meter="{{ (count / most * 100)|round(1) }}"></div>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+
+        {% if usage.by_action %}
+          <h3 class="mt-6 text-xs font-bold uppercase tracking-wide text-soil-400">Recommendations issued</h3>
+          <div class="mt-3 flex flex-wrap gap-2">
+            {% set action_tone = {
+              'treat_now': ('bg-red-50','text-red-700'),
+              'treat_soon': ('bg-amber-50','text-amber-700'),
+              'preventive': ('bg-sky-50','text-sky-700'),
+              'monitor': ('bg-leaf-50','text-leaf-700')
+            } %}
+            {% for level, count in usage.by_action.items() %}
+              {% set tone = action_tone.get(level, ('bg-soil-100','text-soil-600')) %}
+              <span class="rounded-lg {{ tone[0] }} px-3 py-1.5 text-xs font-semibold {{ tone[1] }}">
+                {{ level|replace('_', ' ')|title }} <span class="font-mono">{{ count }}</span>
+              </span>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endif %}
+    </div>
+
+    <!-- Component health -->
+    <div class="rounded-2xl border border-soil-200 bg-white p-6">
+      <h2 class="text-base font-bold tracking-tight text-soil-900">Component health</h2>
+      <ul class="mt-4 space-y-3">
+        {% set components = [
+          ('Model', status.model.ready, status.model.error, status.model.classes ~ ' classes'),
+          ('OOD layer', status.ood.ready, none, 'Calibrated' if status.ood.calibrated else 'Default thresholds'),
+          ('Relevance gate', status.ood.relevance_gate, none, 'ImageNet MobileNetV2'),
+          ('Knowledge base', status.knowledge_base.ready, status.knowledge_base.error, (status.knowledge_base.pest_count|default(0)) ~ ' pests'),
+          ('Cloudinary', status.cloudinary.ready, status.cloudinary.error, status.cloudinary.folder),
+          ('Firestore', status.firestore.ready, status.firestore.error, status.firestore.collection)
+        ] %}
+        {% for name, ready, error, detail in components %}
+          <li class="flex items-start gap-3">
+            <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full {{ 'bg-leaf-500' if ready else 'bg-red-400' }}" aria-hidden="true"></span>
+            <span class="min-w-0 flex-1">
+              <span class="block text-[13px] font-medium text-soil-800">{{ name }}</span>
+              <span class="block truncate text-[11px] {{ 'text-soil-400' if ready else 'text-red-600' }}" {% if error %}title="{{ error }}"{% endif %}>
+                {{ detail if ready else (error or 'Unavailable') }}
+              </span>
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+
+      <button type="button" id="reloadSources"
+              class="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-soil-200 px-4 py-2.5 text-xs font-semibold text-soil-700 hover:bg-soil-50">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        Reload workbook and metrics
+      </button>
+      <p id="reloadResult" class="mt-2 hidden text-center text-[11px]"></p>
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

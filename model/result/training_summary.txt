@@ -1,0 +1,7 @@
+CORN PEST DETECTION FINAL SUMMARY
+================================================================================
+
+Final Accuracy : 93.95%
+Precision : 94.02%
+Recall : 93.95%
+F1 Score : 93.93%

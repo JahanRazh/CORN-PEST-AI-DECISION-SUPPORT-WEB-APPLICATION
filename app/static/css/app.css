@@ -1,0 +1,75 @@
+/* Small additions Tailwind utilities do not cover.
+   Everything else is done with Tailwind classes from the CDN build. */
+
+/* --- Scrollbars ------------------------------------------------------- */
+.thin-scroll::-webkit-scrollbar        { width: 8px; height: 8px; }
+.thin-scroll::-webkit-scrollbar-track  { background: #f5f5f4; border-radius: 4px; }
+.thin-scroll::-webkit-scrollbar-thumb  { background: #d6d3d1; border-radius: 4px; }
+.thin-scroll::-webkit-scrollbar-thumb:hover { background: #a8a29e; }
+
+/* --- Drag and drop upload zone ---------------------------------------- */
+.dropzone            { transition: border-color .2s, background-color .2s, transform .2s; }
+.dropzone.is-dragging { border-color: #16a34a; background-color: #f0fdf4; transform: scale(1.01); }
+
+/* Scanning bar shown while the pipeline runs. */
+.scan-line {
+  position: absolute; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, transparent, #22c55e, transparent);
+  box-shadow: 0 0 12px 2px rgba(34,197,94,.55);
+  animation: scanSweep 1.8s ease-in-out infinite;
+}
+@keyframes scanSweep { 0%,100% { top: 4%; } 50% { top: 96%; } }
+
+/* --- Confidence and urgency meters ------------------------------------ */
+.meter-fill { transition: width .9s cubic-bezier(.22,1,.36,1); }
+
+/* --- Confusion matrix -------------------------------------------------- */
+.cm-cell { transition: transform .12s, box-shadow .12s; }
+.cm-cell:hover {
+  transform: scale(1.35); z-index: 20;
+  box-shadow: 0 4px 14px rgba(0,0,0,.28);
+  border-radius: 3px;
+}
+
+/* Vertical column headers for the matrix. */
+.cm-vertical {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  white-space: nowrap;
+}
+
+/* --- Signal bars in the OOD panel -------------------------------------- */
+.signal-track { position: relative; }
+.signal-marker {
+  position: absolute; top: -3px; width: 2px; height: 14px;
+  background: #44403c; border-radius: 1px;
+}
+
+/* --- Reasoning timeline ------------------------------------------------ */
+.timeline-item { position: relative; padding-left: 1.75rem; }
+.timeline-item::before {
+  content: ''; position: absolute; left: .3125rem; top: .5rem;
+  width: .625rem; height: .625rem; border-radius: 9999px;
+  background: #fff; border: 2px solid #16a34a;
+}
+.timeline-item::after {
+  content: ''; position: absolute; left: .625rem; top: 1.25rem; bottom: -.5rem;
+  width: 2px; background: #e7e5e4;
+}
+.timeline-item:last-child::after { display: none; }
+
+/* --- Print: allow a result page to be filed as evidence ---------------- */
+@media print {
+  header, footer, .no-print { display: none !important; }
+  body { background: #fff; }
+  .print-block { break-inside: avoid; }
+}
+
+/* --- Motion preferences ------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+}

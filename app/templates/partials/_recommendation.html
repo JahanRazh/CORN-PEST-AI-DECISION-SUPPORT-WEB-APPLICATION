@@ -1,0 +1,243 @@
+{# Recommendation panels: chemical, biological and IPM tracks.
+   Rendered both on first page load and by /api/recompute when the field
+   context changes, so there is one source of truth for this markup. #}
+
+{% set action_styles = {
+  'treat_now':  ('border-red-200',   'bg-red-50',   'text-red-800',   'bg-red-500',   'Immediate action'),
+  'treat_soon': ('border-amber-200', 'bg-amber-50', 'text-amber-800', 'bg-amber-500', 'Prepare to act'),
+  'preventive': ('border-sky-200',   'bg-sky-50',   'text-sky-800',   'bg-sky-500',   'Plan preventively'),
+  'monitor':    ('border-leaf-200',  'bg-leaf-50',  'text-leaf-800',  'bg-leaf-500',  'Keep watching')
+} %}
+{% set border, bg, text, bar, badge = action_styles.get(recommendation.action_level, action_styles['monitor']) %}
+
+<!-- ---------- Action verdict ---------- -->
+<div class="print-block rounded-2xl border {{ border }} {{ bg }} p-6">
+  <div class="flex flex-wrap items-start justify-between gap-4">
+    <div class="min-w-0 flex-1">
+      <span class="inline-block rounded-full bg-white/70 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider {{ text }}">{{ badge }}</span>
+      <h3 class="mt-2 text-xl font-bold tracking-tight {{ text }}">{{ recommendation.action_headline }}</h3>
+      <p class="mt-2 max-w-2xl text-sm leading-relaxed text-soil-700">{{ recommendation.action_detail }}</p>
+    </div>
+
+    <div class="w-full shrink-0 sm:w-44">
+      <div class="flex items-baseline justify-between">
+        <span class="text-[11px] font-semibold uppercase tracking-wide text-soil-500">Urgency</span>
+        <span class="text-lg font-bold {{ text }}">{{ recommendation.urgency_score }}<span class="text-xs font-medium text-soil-400">/100</span></span>
+      </div>
+      <div class="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-white/80">
+        <div class="meter-fill h-full rounded-full {{ bar }}" style="width:0%" data-meter="{{ recommendation.urgency_score }}"></div>
+      </div>
+    </div>
+  </div>
+
+  {% if recommendation.threshold_guidance %}
+    <div class="mt-4 rounded-xl border border-white/70 bg-white/70 p-4">
+      <h4 class="text-[11px] font-bold uppercase tracking-wider text-soil-500">Economic threshold</h4>
+      <p class="mt-1 text-sm leading-relaxed text-soil-700">{{ recommendation.threshold_guidance }}</p>
+    </div>
+  {% endif %}
+  {% if recommendation.timing_guidance %}
+    <div class="mt-3 rounded-xl border border-white/70 bg-white/70 p-4">
+      <h4 class="text-[11px] font-bold uppercase tracking-wider text-soil-500">Application timing</h4>
+      <p class="mt-1 text-sm leading-relaxed text-soil-700">{{ recommendation.timing_guidance }}</p>
+    </div>
+  {% endif %}
+</div>
+
+<!-- ---------- Chemical options ---------- -->
+<div class="print-block mt-6 rounded-2xl border border-soil-200 bg-white">
+  <div class="flex flex-wrap items-center justify-between gap-3 border-b border-soil-200 px-6 py-4">
+    <div class="flex items-center gap-3">
+      <span class="grid h-9 w-9 place-items-center rounded-xl bg-corn-100 text-corn-700" aria-hidden="true">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+      </span>
+      <div>
+        <h3 class="text-base font-bold tracking-tight text-soil-900">Chemical control</h3>
+        <p class="text-xs text-soil-500">Ranked for your field context &middot; {{ recommendation.chemical_options|length }} option{{ '' if recommendation.chemical_options|length == 1 else 's' }}</p>
+      </div>
+    </div>
+    {% set permitted_count = recommendation.chemical_options|selectattr('permitted')|list|length %}
+    {% if permitted_count != recommendation.chemical_options|length %}
+      <span class="rounded-full bg-red-50 px-2.5 py-1 text-[11px] font-semibold text-red-700">
+        {{ recommendation.chemical_options|length - permitted_count }} blocked by pre-harvest interval
+      </span>
+    {% endif %}
+  </div>
+
+  {% if recommendation.chemical_options %}
+    <ul class="divide-y divide-soil-100">
+      {% for option in recommendation.chemical_options %}
+        <li class="px-6 py-4 {% if not option.permitted %}bg-red-50/40{% elif loop.first %}bg-leaf-50/40{% endif %}">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-2">
+                {% if loop.first and option.permitted %}
+                  <span class="rounded bg-leaf-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">Best fit</span>
+                {% endif %}
+                <h4 class="text-sm font-bold text-soil-900">{{ option.active_ingredient }}</h4>
+                {% if option.restricted_use %}
+                  <span class="rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-orange-700" title="Restricted-use pesticide">RUP</span>
+                {% endif %}
+                {% if not option.permitted %}
+                  <span class="rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-700">Not permissible</span>
+                {% endif %}
+              </div>
+
+              <div class="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-soil-500">
+                {% if option.trade_name %}<span>Trade name: <span class="font-medium text-soil-700">{{ option.trade_name }}</span></span>{% endif %}
+                {% if option.moa_group %}<span>IRAC group <span class="font-mono font-semibold text-soil-700">{{ option.moa_group }}</span></span>{% endif %}
+                {% if option.phi_days is not none %}<span>PHI <span class="font-semibold text-soil-700">{{ option.phi_days }} d</span></span>{% endif %}
+              </div>
+            </div>
+
+            <div class="w-24 shrink-0 text-right">
+              <div class="text-xs font-semibold text-soil-400">Suitability</div>
+              <div class="text-lg font-bold {{ 'text-leaf-700' if option.score >= 60 else ('text-amber-600' if option.score >= 40 else 'text-red-600') }}">{{ option.score }}</div>
+            </div>
+          </div>
+
+          {% if option.advantages or option.cautions %}
+            <div class="mt-3 grid gap-2 sm:grid-cols-2">
+              {% for advantage in option.advantages %}
+                <p class="flex items-start gap-1.5 text-xs text-leaf-800">
+                  <svg class="mt-0.5 h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                  {{ advantage }}
+                </p>
+              {% endfor %}
+              {% for caution in option.cautions %}
+                <p class="flex items-start gap-1.5 text-xs text-red-700">
+                  <svg class="mt-0.5 h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M5.07 19h13.86c1.54 0 2.5-1.67 1.73-3L13.73 4c-.77-1.33-2.69-1.33-3.46 0L3.34 16c-.77 1.33.19 3 1.73 3z"/></svg>
+                  {{ caution }}
+                </p>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <p class="mt-2 text-[11px] text-soil-400">Source: {{ option.source }}</p>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="px-6 py-8 text-center text-sm text-soil-500">
+      No chemical products are listed for this pest in the knowledge base.
+    </p>
+  {% endif %}
+</div>
+
+<!-- ---------- Biological options ---------- -->
+<div class="print-block mt-6 rounded-2xl border border-soil-200 bg-white">
+  <div class="flex items-center gap-3 border-b border-soil-200 px-6 py-4">
+    <span class="grid h-9 w-9 place-items-center rounded-xl bg-leaf-100 text-leaf-700" aria-hidden="true">
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18m0-18C9 6 6 6.5 4 8c0 6 3.5 10 8 13 4.5-3 8-7 8-13-2-1.5-5-2-8-5z"/></svg>
+    </span>
+    <div>
+      <h3 class="text-base font-bold tracking-tight text-soil-900">Biological control</h3>
+      <p class="text-xs text-soil-500">Suitability adjusted for {{ recommendation.context.weather_label|lower }} conditions</p>
+    </div>
+  </div>
+
+  {% if recommendation.biological_options %}
+    <ul class="divide-y divide-soil-100">
+      {% for option in recommendation.biological_options %}
+        {% set suit = {
+          'favoured': ('bg-leaf-100', 'text-leaf-800', 'Favoured'),
+          'suitable': ('bg-sky-100',  'text-sky-800',  'Suitable'),
+          'limited':  ('bg-amber-100','text-amber-800','Limited')
+        }.get(option.suitability, ('bg-soil-100','text-soil-700','Unknown')) %}
+        <li class="flex items-start gap-3 px-6 py-4">
+          <span class="mt-0.5 shrink-0 rounded-full {{ suit[0] }} px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide {{ suit[1] }}">{{ suit[2] }}</span>
+          <div class="min-w-0 flex-1">
+            <h4 class="text-sm font-semibold text-soil-900">{{ option.agent }}</h4>
+            <p class="mt-0.5 text-xs leading-relaxed text-soil-600">{{ option.note }}</p>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="px-6 py-8 text-center text-sm text-soil-500">No biological control agents are listed for this pest.</p>
+  {% endif %}
+</div>
+
+<!-- ---------- IPM programme ---------- -->
+<div class="print-block mt-6 rounded-2xl border border-soil-200 bg-white">
+  <div class="flex items-center gap-3 border-b border-soil-200 px-6 py-4">
+    <span class="grid h-9 w-9 place-items-center rounded-xl bg-violet-100 text-violet-700" aria-hidden="true">
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+    </span>
+    <div>
+      <h3 class="text-base font-bold tracking-tight text-soil-900">Integrated pest management programme</h3>
+      <p class="text-xs text-soil-500">Sequenced actions, least disruptive first</p>
+    </div>
+  </div>
+
+  <ol class="space-y-0 px-6 py-5">
+    {% for action in recommendation.ipm_actions %}
+      {% set cat = {
+        'Monitor':      ('bg-sky-100','text-sky-700'),
+        'Cultural':     ('bg-corn-100','text-corn-800'),
+        'Biological':   ('bg-leaf-100','text-leaf-700'),
+        'Chemical':     ('bg-orange-100','text-orange-700'),
+        'Resistance':   ('bg-violet-100','text-violet-700'),
+        'Follow-up':    ('bg-soil-200','text-soil-700'),
+        'Conservation': ('bg-emerald-100','text-emerald-700')
+      }.get(action.category, ('bg-soil-100','text-soil-700')) %}
+      <li class="timeline-item pb-5 last:pb-0">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="rounded {{ cat[0] }} px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide {{ cat[1] }}">{{ action.category }}</span>
+          <h4 class="text-sm font-semibold text-soil-900">{{ action.title }}</h4>
+        </div>
+        <p class="mt-1 text-[13px] leading-relaxed text-soil-600">{{ action.detail }}</p>
+      </li>
+    {% endfor %}
+  </ol>
+</div>
+
+<!-- ---------- Environmental notes ---------- -->
+{% if recommendation.environmental_notes %}
+  <div class="print-block mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-6">
+    <h3 class="flex items-center gap-2 text-sm font-bold text-emerald-900">
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      Environmental and safety considerations
+    </h3>
+    <ul class="mt-3 space-y-2">
+      {% for note in recommendation.environmental_notes %}
+        <li class="flex items-start gap-2 text-[13px] leading-relaxed text-emerald-900">
+          <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" aria-hidden="true"></span>
+          {{ note }}
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}
+
+<!-- ---------- Decision reasoning ---------- -->
+<div class="print-block mt-6 rounded-2xl border border-soil-200 bg-white">
+  <div class="flex items-center gap-3 border-b border-soil-200 px-6 py-4">
+    <span class="grid h-9 w-9 place-items-center rounded-xl bg-soil-100 text-soil-700" aria-hidden="true">
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+    </span>
+    <div>
+      <h3 class="text-base font-bold tracking-tight text-soil-900">Why this recommendation</h3>
+      <p class="text-xs text-soil-500">{{ recommendation.reasoning|length }} rules fired, in order</p>
+    </div>
+  </div>
+
+  <ol class="divide-y divide-soil-100">
+    {% for step in recommendation.reasoning %}
+      <li class="flex gap-4 px-6 py-4">
+        <span class="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-soil-100 text-[11px] font-bold text-soil-600">{{ loop.index }}</span>
+        <div class="min-w-0 flex-1">
+          <h4 class="text-[13px] font-bold text-soil-900">{{ step.rule }}</h4>
+          <p class="mt-0.5 text-[13px] leading-relaxed text-soil-600">{{ step.detail }}</p>
+        </div>
+      </li>
+    {% endfor %}
+  </ol>
+
+  <div class="border-t border-soil-200 bg-soil-50 px-6 py-3">
+    <p class="text-[11px] text-soil-500">
+      <span class="font-semibold uppercase tracking-wide">Recommendation source:</span>
+      {{ recommendation.sources|join(' &middot; ')|safe }}
+    </p>
+  </div>
+</div>

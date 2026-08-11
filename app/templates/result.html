@@ -1,0 +1,466 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Rejected image' if record.status == 'rejected' else record.pest.display_name }}{% endblock %}
+
+{% block content %}
+{% set prediction = record.prediction %}
+{% set ood = record.ood %}
+
+<section class="border-b border-soil-200 bg-white">
+  <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <a href="{{ url_for('main.index') }}" class="no-print grid h-9 w-9 place-items-center rounded-lg border border-soil-200 text-soil-500 hover:bg-soil-50 hover:text-soil-800" aria-label="Back to detection">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+        </a>
+        <div>
+          <h1 class="text-xl font-bold tracking-tight text-soil-900">Detection result</h1>
+          <p class="font-mono text-xs text-soil-400">{{ record.detection_id }} &middot; {{ record.timestamp[:19]|replace('T', ' ') }} UTC</p>
+        </div>
+      </div>
+
+      <div class="no-print flex items-center gap-2">
+        <button type="button" onclick="window.print()" class="flex items-center gap-1.5 rounded-lg border border-soil-200 px-3 py-2 text-xs font-semibold text-soil-700 hover:bg-soil-50">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+          Print
+        </button>
+        <a href="{{ url_for('main.index') }}" class="flex items-center gap-1.5 rounded-lg bg-leaf-700 px-3 py-2 text-xs font-semibold text-white hover:bg-leaf-800">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          New detection
+        </a>
+      </div>
+    </div>
+
+    {% set persistence = record.get('persistence', {}) %}
+    {% if persistence and not persistence.saved %}
+      <p class="no-print mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs text-amber-800">
+        This result was not saved to Firestore ({{ persistence.error }}). It is shown from your session and will be lost when the browser closes.
+      </p>
+    {% endif %}
+  </div>
+</section>
+
+<div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+  <div class="grid gap-6 lg:grid-cols-12">
+
+    <!-- ==================== Left column: evidence ==================== -->
+    <div class="space-y-6 lg:col-span-4">
+
+      <!-- The submitted image -->
+      <div class="print-block overflow-hidden rounded-2xl border border-soil-200 bg-white">
+        <div class="relative bg-soil-900">
+          {% if record.image.uploaded %}
+            <img src="{{ record.image.url }}" alt="Submitted image of {{ record.pest.display_name if record.pest else 'an unrecognised subject' }}"
+                 class="block max-h-80 w-full object-contain">
+          {% else %}
+            <div class="flex h-52 flex-col items-center justify-center gap-2 text-soil-500">
+              <svg class="h-10 w-10" fill="none" stroke="currentColor" stroke-width="1.4" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              <p class="px-6 text-center text-xs">Image not stored{% if record.image.error %} &mdash; {{ record.image.error }}{% endif %}</p>
+            </div>
+          {% endif %}
+          <span class="absolute right-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider backdrop-blur
+                       {{ 'bg-red-500/90 text-white' if record.status == 'rejected' else 'bg-leaf-500/90 text-white' }}">
+            {{ 'Rejected' if record.status == 'rejected' else 'Accepted' }}
+          </span>
+        </div>
+        <div class="px-4 py-3">
+          <p class="truncate text-xs font-medium text-soil-700" title="{{ record.filename }}">{{ record.filename }}</p>
+          {% if record.image.uploaded %}
+            <p class="mt-0.5 text-[11px] text-soil-400">{{ record.image.width }}&times;{{ record.image.height }} &middot; {{ (record.image.bytes / 1024)|round|int }} KB &middot; stored on Cloudinary</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Field context -->
+      <div class="print-block rounded-2xl border border-soil-200 bg-white p-5">
+        <h2 class="text-sm font-bold text-soil-900">Field context you reported</h2>
+        <dl class="mt-3 space-y-2.5 text-[13px]">
+          {% set severity_label = (SEVERITY_LEVELS | selectattr('key', 'equalto', record.context.severity) | first).label %}
+          {% set stage_label = (GROWTH_STAGES | selectattr('key', 'equalto', record.context.growth_stage) | first).label %}
+          {% set weather_label = (WEATHER_CONDITIONS | selectattr('key', 'equalto', record.context.weather) | first).label %}
+          {% for label, value in [
+            ('Growth stage', stage_label),
+            ('Severity', severity_label),
+            ('Weather', weather_label),
+            ('Days to harvest', record.context.days_to_harvest if record.context.days_to_harvest is not none else 'Not specified'),
+            ('Beneficials present', 'Yes' if record.context.beneficials_present else 'No')
+          ] %}
+            <div class="flex justify-between gap-4 border-b border-soil-100 pb-2 last:border-0 last:pb-0">
+              <dt class="shrink-0 text-soil-500">{{ label }}</dt>
+              <dd class="text-right font-medium text-soil-800">{{ value }}</dd>
+            </div>
+          {% endfor %}
+        </dl>
+        {% if record.context.field_note %}
+          <p class="mt-3 rounded-lg bg-soil-50 p-3 text-xs italic text-soil-600">"{{ record.context.field_note }}"</p>
+        {% endif %}
+      </div>
+
+      <!-- Probability distribution -->
+      <div class="print-block rounded-2xl border border-soil-200 bg-white p-5">
+        <h2 class="text-sm font-bold text-soil-900">Class probability distribution</h2>
+        <p class="mt-0.5 text-xs text-soil-500">Full softmax output across all {{ prediction.ranked|length }} trained classes.</p>
+        <ul class="mt-4 space-y-2.5">
+          {% for entry in prediction.ranked %}
+            <li>
+              <div class="flex items-baseline justify-between gap-2 text-xs">
+                <span class="truncate {{ 'font-bold text-soil-900' if loop.first else 'text-soil-600' }}" title="{{ entry.class_name }}">{{ entry.class_name|shortclass }}</span>
+                <span class="shrink-0 font-mono {{ 'font-bold text-leaf-700' if loop.first else 'text-soil-400' }}">{{ '%.2f'|format(entry.percentage) }}%</span>
+              </div>
+              <div class="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-soil-100">
+                <div class="meter-fill h-full rounded-full {{ 'bg-leaf-600' if loop.first else ('bg-soil-400' if loop.index == 2 else 'bg-soil-300') }}"
+                     style="width:0%" data-meter="{{ entry.percentage }}"></div>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+        <p class="mt-4 border-t border-soil-100 pt-3 text-[11px] text-soil-500">
+          Top-2 margin <span class="font-mono font-semibold text-soil-700">{{ '%.4f'|format(prediction.margin) }}</span>
+          &mdash; the gap between the first and second class. A narrow gap is what the OOD margin signal watches for.
+        </p>
+      </div>
+    </div>
+
+    <!-- ==================== Right column: the verdict ==================== -->
+    <div class="space-y-6 lg:col-span-8">
+
+      {% if record.status == 'rejected' %}
+        <!-- ---------------- REJECTED ---------------- -->
+        <div class="print-block rounded-2xl border-2 border-red-200 bg-red-50 p-6">
+          <div class="flex items-start gap-4">
+            <span class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-red-100 text-red-600" aria-hidden="true">
+              <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+            </span>
+            <div class="min-w-0 flex-1">
+              <h2 class="text-2xl font-bold tracking-tight text-red-900">{{ record.rejection.title }}</h2>
+              <p class="mt-2 leading-relaxed text-red-800">{{ record.rejection.message }}</p>
+            </div>
+          </div>
+
+          <div class="mt-5 rounded-xl border border-red-200 bg-white p-5">
+            <h3 class="text-sm font-bold text-soil-900">No pest was named, and no recommendation was issued</h3>
+            <p class="mt-1.5 text-[13px] leading-relaxed text-soil-600">
+              A closed-set classifier always returns one of its ten classes, however unrelated the
+              input. Suppressing the answer here is the correct behaviour: an incorrect pest
+              identity would produce a confident and completely wrong pesticide recommendation.
+            </p>
+          </div>
+
+          <div class="mt-4">
+            <h3 class="text-sm font-bold text-red-900">What to try next</h3>
+            <ul class="mt-2 space-y-2">
+              {% for tip in record.rejection.guidance %}
+                <li class="flex items-start gap-2 text-[13px] leading-relaxed text-red-800">
+                  <svg class="mt-0.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                  {{ tip }}
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+
+          <a href="{{ url_for('main.index') }}" class="no-print mt-5 inline-flex items-center gap-2 rounded-xl bg-red-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-red-800">
+            Try another image
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+
+        <div class="print-block rounded-2xl border border-soil-200 bg-white p-5">
+          <h3 class="text-sm font-bold text-soil-900">What the classifier would have said</h3>
+          <p class="mt-1 text-[13px] leading-relaxed text-soil-600">
+            Shown for transparency only. This label was <strong>not</strong> accepted, and nothing
+            downstream of the OOD layer ran.
+          </p>
+          <div class="mt-3 flex items-center gap-3 rounded-xl border border-dashed border-soil-300 bg-soil-50 p-4">
+            <span class="text-sm font-semibold text-soil-500 line-through">{{ prediction.class_name|shortclass }}</span>
+            <span class="font-mono text-xs text-soil-400">{{ prediction.confidence_percentage }}%</span>
+            <span class="ml-auto rounded bg-soil-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-soil-600">Suppressed</span>
+          </div>
+        </div>
+
+      {% else %}
+        <!-- ---------------- ACCEPTED ---------------- -->
+        {% set pest = record.pest %}
+        <div class="print-block overflow-hidden rounded-2xl border border-soil-200 bg-white">
+          <div class="bg-gradient-to-br from-leaf-700 to-leaf-900 px-6 py-6 text-white">
+            <div class="flex flex-wrap items-start justify-between gap-4">
+              <div class="min-w-0">
+                <p class="text-[11px] font-semibold uppercase tracking-widest text-leaf-200">Identified pest</p>
+                <h2 class="mt-1 text-3xl font-extrabold tracking-tight">{{ pest.display_name }}</h2>
+                {% if pest.scientific_name %}
+                  <p class="mt-0.5 text-sm italic text-leaf-100">{{ pest.scientific_name }}</p>
+                {% endif %}
+                {% if pest.profile and pest.profile.pest_group %}
+                  <span class="mt-3 inline-block rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold">{{ pest.profile.pest_group }}</span>
+                {% endif %}
+              </div>
+
+              <div class="w-full shrink-0 rounded-xl bg-white/10 p-4 backdrop-blur sm:w-52">
+                <p class="text-[11px] font-semibold uppercase tracking-wide text-leaf-200">Model confidence</p>
+                <p class="mt-0.5 text-3xl font-extrabold">{{ prediction.confidence_percentage }}<span class="text-lg">%</span></p>
+                <div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/20">
+                  <div class="meter-fill h-full rounded-full bg-white" style="width:0%" data-meter="{{ prediction.confidence_percentage }}"></div>
+                </div>
+                <p class="mt-1.5 text-xs font-medium text-leaf-100">{{ prediction.confidence_band }} confidence</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Expert validation strip -->
+          <div class="border-b border-soil-200 bg-soil-50 px-6 py-4">
+            <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs">
+              <span class="flex items-center gap-1.5 text-soil-600">
+                <svg class="h-4 w-4 text-leaf-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Validated via <span class="font-semibold text-soil-800">{{ pest.match_method }}</span>
+              </span>
+              <span class="text-soil-600">AI class: <span class="font-mono text-[11px] text-soil-800">{{ pest.ai_class }}</span></span>
+              <span class="text-soil-600">{{ pest.product_count }} product record{{ '' if pest.product_count == 1 else 's' }} matched</span>
+              {% if pest.profile %}
+                <a href="{{ url_for('main.pest_detail', slug=pest.profile.slug) }}" class="no-print ml-auto font-semibold text-leaf-700 hover:text-leaf-900">Full knowledge base entry &rarr;</a>
+              {% endif %}
+            </div>
+
+            {% if pest.aliases %}
+              <p class="mt-2 text-[11px] text-soil-500">Also known as: {{ pest.aliases|join(', ') }}</p>
+            {% endif %}
+          </div>
+
+          <!-- Validation notes from the expert mapping layer -->
+          {% if pest.validation_notes %}
+            <div class="space-y-2 px-6 py-4">
+              <h3 class="text-[11px] font-bold uppercase tracking-wider text-soil-500">Expert validation notes</h3>
+              {% for note in pest.validation_notes %}
+                {% set tone = {
+                  'caution': ('border-amber-200','bg-amber-50','text-amber-900','Caution'),
+                  'warning': ('border-red-200','bg-red-50','text-red-900','Warning')
+                }.get(note.severity, ('border-sky-200','bg-sky-50','text-sky-900','Note')) %}
+                <div class="rounded-xl border {{ tone[0] }} {{ tone[1] }} p-3">
+                  <span class="text-[10px] font-bold uppercase tracking-wider {{ tone[2] }}">{{ tone[3] }}</span>
+                  <p class="mt-1 text-[13px] leading-relaxed {{ tone[2] }}">{{ note.message }}</p>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <!-- Damage symptoms -->
+          {% if pest.profile and pest.profile.damage_symptoms %}
+            <div class="border-t border-soil-100 px-6 py-4">
+              <h3 class="text-[11px] font-bold uppercase tracking-wider text-soil-500">Damage symptoms to confirm in the field</h3>
+              <p class="mt-1.5 text-[13px] leading-relaxed text-soil-700">{{ pest.profile.damage_symptoms }}</p>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- ---------- Live context controls ---------- -->
+        <div class="no-print rounded-2xl border border-soil-200 bg-white p-5" id="recomputePanel"
+             data-ai-class="{{ pest.ai_class }}"
+             data-confidence="{{ prediction.confidence }}"
+             data-endpoint="{{ url_for('api.recompute') }}">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 class="text-sm font-bold text-soil-900">Test a different scenario</h2>
+              <p class="mt-0.5 text-xs text-soil-500">
+                Change the field context and the rule engine re-runs instantly. The pest identity is
+                fixed &mdash; only the recommendation changes.
+              </p>
+            </div>
+            <span id="recomputeStatus" class="hidden items-center gap-1.5 rounded-full bg-leaf-50 px-2.5 py-1 text-[11px] font-semibold text-leaf-700">
+              <svg class="h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+              Recalculating
+            </span>
+          </div>
+
+          <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <label for="rc_stage" class="block text-xs font-semibold text-soil-700">Growth stage</label>
+              <select id="rc_stage" class="mt-1 w-full rounded-lg border-soil-300 px-2.5 py-2 text-xs focus:border-leaf-500 focus:ring-1 focus:ring-leaf-500">
+                {% for stage in GROWTH_STAGES %}
+                  <option value="{{ stage.key }}" {% if stage.key == record.context.growth_stage %}selected{% endif %}>{{ stage.label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div>
+              <label for="rc_severity" class="block text-xs font-semibold text-soil-700">Severity</label>
+              <select id="rc_severity" class="mt-1 w-full rounded-lg border-soil-300 px-2.5 py-2 text-xs focus:border-leaf-500 focus:ring-1 focus:ring-leaf-500">
+                {% for level in SEVERITY_LEVELS %}
+                  <option value="{{ level.key }}" {% if level.key == record.context.severity %}selected{% endif %}>{{ level.label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div>
+              <label for="rc_weather" class="block text-xs font-semibold text-soil-700">Weather</label>
+              <select id="rc_weather" class="mt-1 w-full rounded-lg border-soil-300 px-2.5 py-2 text-xs focus:border-leaf-500 focus:ring-1 focus:ring-leaf-500">
+                {% for condition in WEATHER_CONDITIONS %}
+                  <option value="{{ condition.key }}" {% if condition.key == record.context.weather %}selected{% endif %}>{{ condition.label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div>
+              <label for="rc_days" class="block text-xs font-semibold text-soil-700">Days to harvest</label>
+              <input type="number" id="rc_days" min="0" max="365" placeholder="Any"
+                     value="{{ record.context.days_to_harvest if record.context.days_to_harvest is not none else '' }}"
+                     class="mt-1 w-full rounded-lg border-soil-300 px-2.5 py-2 text-xs focus:border-leaf-500 focus:ring-1 focus:ring-leaf-500">
+            </div>
+          </div>
+
+          <label class="mt-3 flex cursor-pointer items-center gap-2 text-xs text-soil-700">
+            <input type="checkbox" id="rc_beneficials" {% if record.context.beneficials_present %}checked{% endif %}
+                   class="h-4 w-4 rounded border-soil-300 text-leaf-600 focus:ring-leaf-500">
+            Beneficial insects present in the crop
+          </label>
+
+          <p id="recomputeNotice" class="mt-3 hidden rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-800"></p>
+        </div>
+
+        <!-- ---------- The recommendation ---------- -->
+        <div id="recommendationRoot">
+          {% with recommendation = record.recommendation %}
+            {% include "partials/_recommendation.html" %}
+          {% endwith %}
+        </div>
+      {% endif %}
+
+      <!-- ==================== OOD panel (both outcomes) ==================== -->
+      <div class="print-block rounded-2xl border border-soil-200 bg-white">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-soil-200 px-6 py-4">
+          <div class="flex items-center gap-3">
+            <span class="grid h-9 w-9 place-items-center rounded-xl {{ 'bg-red-100 text-red-600' if ood.is_ood else 'bg-leaf-100 text-leaf-700' }}" aria-hidden="true">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+            </span>
+            <div>
+              <h2 class="text-base font-bold tracking-tight text-soil-900">Out-of-distribution analysis</h2>
+              <p class="text-xs text-soil-500">
+                {{ ood.votes }} of {{ ood.signals|length }} signals flagged &middot; threshold is {{ ood.votes_required }}
+                &middot; {{ 'calibrated thresholds' if ood.calibrated else 'default thresholds' }}
+              </p>
+            </div>
+          </div>
+          <span class="rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wider
+                       {{ 'bg-red-100 text-red-700' if ood.is_ood else 'bg-leaf-100 text-leaf-700' }}">
+            {{ 'Rejected as unknown' if ood.is_ood else 'Within known distribution' }}
+          </span>
+        </div>
+
+        <p class="border-b border-soil-100 bg-soil-50 px-6 py-3 text-[13px] leading-relaxed text-soil-700">{{ ood.reason }}</p>
+
+        <!-- Relevance gate -->
+        {% if ood.relevance and ood.relevance.available %}
+          <div class="border-b border-soil-100 px-6 py-4">
+            <div class="flex flex-wrap items-baseline justify-between gap-2">
+              <h3 class="text-[11px] font-bold uppercase tracking-wider text-soil-500">Stage 1 &mdash; Relevance gate (ImageNet MobileNetV2)</h3>
+              <span class="text-xs font-semibold {{ 'text-leaf-700' if ood.relevance.passed else 'text-red-600' }}">
+                {{ 'Passed' if ood.relevance.passed else 'Failed' }}
+              </span>
+            </div>
+            <p class="mt-1 text-xs text-soil-500">
+              Probability mass on insect and plant classes:
+              <span class="font-mono font-semibold text-soil-800">{{ '%.4f'|format(ood.relevance.score) }}</span>
+              (needs &ge; {{ ood.relevance.threshold }})
+            </p>
+            <div class="relative mt-2 h-2 w-full overflow-hidden rounded-full bg-soil-100">
+              {% set gate_pct = [ood.relevance.score / (ood.relevance.threshold * 3), 1.0]|min * 100 %}
+              <div class="meter-fill h-full rounded-full {{ 'bg-leaf-500' if ood.relevance.passed else 'bg-red-500' }}"
+                   style="width:0%" data-meter="{{ gate_pct|round(1) }}"></div>
+            </div>
+
+            {% if ood.relevance.labels %}
+              <p class="mt-3 text-[11px] font-semibold uppercase tracking-wide text-soil-400">What ImageNet saw</p>
+              <div class="mt-1.5 flex flex-wrap gap-1.5">
+                {% for label in ood.relevance.labels %}
+                  <span class="inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px]
+                               {{ 'border-leaf-200 bg-leaf-50 text-leaf-800' if label.relevant else 'border-soil-200 bg-soil-50 text-soil-600' }}">
+                    {{ label.label }}
+                    <span class="font-mono text-[10px] opacity-70">{{ '%.1f'|format(label.probability * 100) }}%</span>
+                  </span>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
+
+        <!-- Distributional signals -->
+        <div class="px-6 py-4">
+          <h3 class="text-[11px] font-bold uppercase tracking-wider text-soil-500">Stage 2 &mdash; Distributional signals</h3>
+          <ul class="mt-3 space-y-3">
+            {% for signal in ood.signals %}
+              <li class="rounded-xl border p-3.5 {{ 'border-red-200 bg-red-50/50' if signal.flagged else 'border-soil-200' }}">
+                <div class="flex flex-wrap items-start justify-between gap-2">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2">
+                      <span class="rounded bg-soil-800 px-1.5 py-0.5 font-mono text-[10px] font-bold text-white">{{ signal.abbreviation }}</span>
+                      <h4 class="text-[13px] font-bold text-soil-900">{{ signal.name }}</h4>
+                    </div>
+                    <p class="mt-1 text-xs leading-relaxed text-soil-600">{{ signal.description }}</p>
+                  </div>
+                  <div class="shrink-0 text-right">
+                    <p class="font-mono text-sm font-bold {{ 'text-red-600' if signal.flagged else 'text-leaf-700' }}">{{ signal.value }}</p>
+                    <p class="font-mono text-[10px] text-soil-400">vs {{ signal.threshold }}</p>
+                  </div>
+                </div>
+                <div class="mt-2.5 flex items-center justify-between gap-3">
+                  <span class="rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide
+                               {{ 'bg-red-100 text-red-700' if signal.flagged else 'bg-leaf-100 text-leaf-700' }}">
+                    {{ 'Flagged' if signal.flagged else 'Passed' }}
+                  </span>
+                  <span class="text-[10px] text-soil-400">{{ signal.rule }} &middot; {{ signal.reference }}</span>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+
+          <div class="mt-4 rounded-xl bg-soil-50 p-4">
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-semibold text-soil-700">Vote outcome</span>
+              <span class="font-mono font-bold text-soil-900">{{ ood.votes }} / {{ ood.signals|length }} flagged, {{ ood.votes_required }} required</span>
+            </div>
+            <div class="mt-2 flex gap-1.5">
+              {% for signal in ood.signals %}
+                <div class="h-2 flex-1 rounded-full {{ 'bg-red-500' if signal.flagged else 'bg-leaf-400' }}" title="{{ signal.abbreviation }}: {{ 'flagged' if signal.flagged else 'passed' }}"></div>
+              {% endfor %}
+            </div>
+            <p class="mt-2 text-[11px] leading-relaxed text-soil-500">
+              Signals vote independently. Requiring {{ ood.votes_required }} agreeing flags means one unusual
+              score cannot reject a valid image on its own, and the per-signal breakdown above shows
+              exactly which criterion drove the verdict.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== Pipeline trace ==================== -->
+      <div class="print-block rounded-2xl border border-soil-200 bg-white">
+        <div class="border-b border-soil-200 px-6 py-4">
+          <h2 class="text-base font-bold tracking-tight text-soil-900">Pipeline trace</h2>
+          <p class="text-xs text-soil-500">Every stage that ran, and what it decided.</p>
+        </div>
+        <ol class="divide-y divide-soil-100">
+          {% for step in record.trace %}
+            {% set skipped = step.outcome.startswith('Skipped') %}
+            <li class="flex items-start gap-4 px-6 py-3.5 {{ 'opacity-60' if skipped }}">
+              <span class="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11px] font-bold
+                           {{ 'bg-soil-100 text-soil-400' if skipped else 'bg-leaf-100 text-leaf-700' }}">{{ loop.index }}</span>
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-wrap items-baseline gap-x-2">
+                  <h3 class="text-[13px] font-bold text-soil-900">{{ step.stage }}</h3>
+                  <span class="text-[11px] text-soil-400">{{ step.component }}</span>
+                </div>
+                <p class="mt-0.5 text-[13px] leading-relaxed {{ 'italic text-soil-500' if skipped else 'text-soil-600' }}">{{ step.outcome }}</p>
+              </div>
+            </li>
+          {% endfor %}
+        </ol>
+      </div>
+
+      <p class="rounded-xl border border-soil-200 bg-soil-50 p-4 text-xs leading-relaxed text-soil-500">
+        <strong class="text-soil-700">Before you spray:</strong> this is a research prototype. Confirm the pest
+        identity in the field against the damage symptoms above, and check that every product named
+        here is registered for use on maize in your country and applied at its label rate.
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if record.status != 'rejected' %}
+  <script src="{{ url_for('static', filename='js/result.js') }}"></script>
+{% endif %}
+{% endblock %}
