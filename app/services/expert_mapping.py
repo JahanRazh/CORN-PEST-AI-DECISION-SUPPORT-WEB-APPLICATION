@@ -39,21 +39,18 @@ from app.services import knowledge_base
 # Model class name -> knowledge base entities.
 #
 #   kb_name       : matching row in Sheet1 (curated pest profile)
-#   product_labels: matching blocks in Sheet2 (product reference table)
 #   display_name  : the agronomic name shown to the user
 CLASS_MAPPING: dict[str, dict[str, Any]] = {
     "Army Worm-Spodoptera frugiperda": {
         "display_name": "Fall Armyworm",
         "kb_name": "Fall Armyworm",
         "scientific_name": "Spodoptera frugiperda",
-        "product_labels": ["Armyworm species"],
         "aliases": ["Fall Army Worm", "FAW"],
     },
     "Beet Army Worm-Spodoptera exigua": {
         "display_name": "Beet Armyworm",
         "kb_name": "Beet Armyworm",
         "scientific_name": "Spodoptera exigua",
-        "product_labels": ["Armyworm species"],
         "aliases": ["Small Mottled Willow Moth"],
         "notes": [
             "The product reference table groups this species under the generic "
@@ -65,7 +62,6 @@ CLASS_MAPPING: dict[str, dict[str, Any]] = {
         "display_name": "Black Cutworm",
         "kb_name": "Black Cutworm",
         "scientific_name": "Agrotis ipsilon",
-        "product_labels": ["Cutworms (Black, Dingy, Variegated, Claybacked)"],
         "aliases": ["Agrotis ypsilon", "Greasy Cutworm"],
         "validation": {
             "severity": "info",
@@ -80,14 +76,12 @@ CLASS_MAPPING: dict[str, dict[str, Any]] = {
         "display_name": "Corn Aphid",
         "kb_name": "Corn Aphid",
         "scientific_name": "Rhopalosiphum maidis",
-        "product_labels": ["Corn Leaf Aphid"],
         "aliases": ["Corn Leaf Aphid", "Green Corn Aphid"],
     },
     "Corn Borer-Ostrinia furnacalis": {
         "display_name": "Corn Borer",
         "kb_name": "Corn Borer",
         "scientific_name": "Ostrinia furnacalis",
-        "product_labels": ["Corn Borer: European and Southwestern"],
         "aliases": ["Asian Corn Borer", "Ostrinia nubilalis"],
         "validation": {
             "severity": "caution",
@@ -104,21 +98,18 @@ CLASS_MAPPING: dict[str, dict[str, Any]] = {
         "display_name": "Corn Earworm",
         "kb_name": "Corn Earworm",
         "scientific_name": "Helicoverpa armigera",
-        "product_labels": ["Corn Earworm"],
         "aliases": ["Cotton Bollworm", "Helicoverpa zea", "Old World Bollworm"],
     },
     "Corn Grasshopper-Oxya chinensis": {
         "display_name": "Corn Grasshopper",
         "kb_name": "Corn Grasshopper",
         "scientific_name": "Oxya chinensis",
-        "product_labels": ["Grasshopper"],
         "aliases": ["Rice Grasshopper"],
     },
     "Flea Beetle-Phyllotreta spp": {
         "display_name": "Flea Beetle",
         "kb_name": "Flea Beetle",
         "scientific_name": "Phyllotreta spp.",
-        "product_labels": ["Corn Flea Beetle"],
         "aliases": ["Corn Flea Beetle", "Chaetocnema pulicaria"],
         "validation": {
             "severity": "info",
@@ -134,14 +125,12 @@ CLASS_MAPPING: dict[str, dict[str, Any]] = {
         "display_name": "White Grub",
         "kb_name": "White Grub",
         "scientific_name": "Holotrichia spp.",
-        "product_labels": ["White Grubs"],
         "aliases": ["Cockchafer larvae", "Scarab larvae"],
     },
     "Wire Worm-Agriotes lineatus": {
         "display_name": "Wireworm",
         "kb_name": "Wireworm",
         "scientific_name": "Limonius spp.",
-        "product_labels": ["Wireworms"],
         "aliases": ["Agriotes lineatus", "Click beetle larvae"],
         "validation": {
             "severity": "caution",
@@ -167,7 +156,6 @@ class MappingResult:
     matched: bool
     match_method: str
     pest_profile: dict[str, Any] | None = None
-    products: list[dict[str, Any]] = field(default_factory=list)
     aliases: list[str] = field(default_factory=list)
     validation_notes: list[dict[str, str]] = field(default_factory=list)
 
@@ -184,7 +172,6 @@ class MappingResult:
             "match_method": self.match_method,
             "aliases": self.aliases,
             "validation_notes": self.validation_notes,
-            "product_count": len(self.products),
             "has_warnings": self.has_warnings,
         }
 
@@ -249,19 +236,6 @@ def map_class(ai_class: str) -> MappingResult:
         for note in entry.get("notes", []):
             notes.append({"severity": "info", "message": note})
 
-        products = knowledge_base.products_for(entry.get("product_labels", []))
-        if not products:
-            notes.append(
-                {
-                    "severity": "info",
-                    "message": (
-                        "No product-level records were found for this pest in "
-                        "the reference table; recommendations are drawn from "
-                        "the curated pest profile only."
-                    ),
-                }
-            )
-
         return MappingResult(
             ai_class=ai_class,
             display_name=entry["display_name"],
@@ -269,7 +243,6 @@ def map_class(ai_class: str) -> MappingResult:
             matched=profile is not None,
             match_method=match_method,
             pest_profile=profile,
-            products=products,
             aliases=entry.get("aliases", []),
             validation_notes=notes,
         )
@@ -294,7 +267,6 @@ def map_class(ai_class: str) -> MappingResult:
         matched=profile is not None,
         match_method=method,
         pest_profile=profile,
-        products=[],
         aliases=[],
         validation_notes=notes,
     )
@@ -318,7 +290,6 @@ def coverage_report() -> dict[str, Any]:
                 "display_name": result.display_name,
                 "matched": result.matched,
                 "match_method": result.match_method,
-                "product_count": len(result.products),
                 "note_count": len(result.validation_notes),
                 "has_warnings": result.has_warnings,
             }

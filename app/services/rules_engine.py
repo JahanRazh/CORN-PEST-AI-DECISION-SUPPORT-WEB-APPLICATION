@@ -285,40 +285,7 @@ def _build_chemical_options(
 ) -> list[dict[str, Any]]:
     """Rank product-level records; fall back to the curated ingredient list."""
     options: list[dict[str, Any]] = []
-    seen: set[str] = set()
-
-    for product in mapping_result.products:
-        key = f"{product['active_ingredient'].lower()}|{product['trade_name'].lower()}"
-        if key in seen:
-            continue
-        seen.add(key)
-
-        score, advantages, cautions = _score_chemical(
-            product,
-            stage=stage,
-            beneficials_present=beneficials_present,
-            days_to_harvest=days_to_harvest,
-            weather=weather,
-        )
-        options.append(
-            {
-                "active_ingredient": product["active_ingredient"],
-                "trade_name": product["trade_name"],
-                "moa_group": product.get("moa_group", ""),
-                "phi_days": product.get("phi_days"),
-                "restricted_use": product.get("restricted_use", False),
-                "product_type": product.get("product_type", ""),
-                "score": round(score, 1),
-                "advantages": advantages,
-                "cautions": cautions,
-                "permitted": not any("not permissible" in c for c in cautions),
-                "source": "Product reference table (Sheet2)",
-            }
-        )
-
-    # If the product table has no block for this pest, use the curated
-    # active-ingredient list from the pest profile instead.
-    if not options and mapping_result.pest_profile:
+    if mapping_result.pest_profile:
         profile = mapping_result.pest_profile
         moa_groups = profile.get("moa_groups", [])
         for index, ingredient in enumerate(profile.get("active_ingredients", [])):
@@ -433,8 +400,6 @@ def generate(
 
     if profile:
         sources.append("Curated pest profile (Excel Sheet1)")
-    if mapping_result.products:
-        sources.append("Pesticide product reference table (Excel Sheet2)")
 
     # --- Rule 1: growth stage alignment -----------------------------------
     stage_ok, stage_reason = _stage_alignment(

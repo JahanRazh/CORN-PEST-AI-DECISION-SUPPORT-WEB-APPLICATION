@@ -91,58 +91,13 @@
           <div>
             <h2 class="text-base font-bold tracking-tight text-soil-900">Chemical control products</h2>
             <p class="text-xs text-soil-500">
-              {{ products|length if products else pest.active_ingredients|length }} record{{ '' if (products|length if products else pest.active_ingredients|length) == 1 else 's' }} from the workbook
+              {{ pest.active_ingredients|length }} record{{ '' if pest.active_ingredients|length == 1 else 's' }} from the workbook
             </p>
           </div>
           <span class="rounded-full bg-soil-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-soil-600">Verbatim from source</span>
         </div>
 
-        {% if products %}
-          <div class="overflow-x-auto thin-scroll">
-            <table class="w-full text-left text-sm">
-              <thead class="border-b border-soil-200 bg-soil-50 text-[11px] uppercase tracking-wide text-soil-500">
-                <tr>
-                  <th scope="col" class="px-6 py-3 font-semibold">Active ingredient</th>
-                  <th scope="col" class="px-4 py-3 font-semibold">Trade name</th>
-                  <th scope="col" class="px-4 py-3 font-semibold">IRAC</th>
-                  <th scope="col" class="px-4 py-3 font-semibold">PHI</th>
-                  <th scope="col" class="px-4 py-3 font-semibold">Type</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-soil-100">
-                {% for product in products %}
-                  <tr class="hover:bg-soil-50/60">
-                    <td class="px-6 py-3">
-                      <div class="flex flex-wrap items-center gap-1.5">
-                        <span class="font-semibold text-soil-900">{{ product.active_ingredient }}</span>
-                        {% if product.restricted_use %}
-                          <span class="rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-orange-700" title="Restricted-use pesticide">RUP</span>
-                        {% endif %}
-                      </div>
-                      {% if product.guideline %}
-                        <p class="mt-1 max-w-md text-xs leading-relaxed text-soil-500">{{ product.guideline }}</p>
-                      {% endif %}
-                    </td>
-                    <td class="px-4 py-3 text-soil-700">{{ product.trade_name or '—' }}</td>
-                    <td class="px-4 py-3">
-                      {% if product.moa_group %}
-                        <span class="font-mono text-xs font-semibold text-violet-700">{{ product.moa_group }}</span>
-                      {% else %}—{% endif %}
-                    </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-soil-700">
-                      {% if product.phi_days is not none %}
-                        <span class="font-semibold">{{ product.phi_days }}</span> d
-                      {% else %}
-                        <span class="text-soil-400" title="{{ product.phi_raw }}">{{ product.phi_raw or '—' }}</span>
-                      {% endif %}
-                    </td>
-                    <td class="px-4 py-3 text-xs text-soil-500">{{ product.product_type or '—' }}</td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        {% elif pest.active_ingredients %}
+        {% if pest.active_ingredients %}
           <ul class="divide-y divide-soil-100">
             {% for ingredient in pest.active_ingredients %}
               <li class="flex items-center gap-3 px-6 py-3 text-sm">

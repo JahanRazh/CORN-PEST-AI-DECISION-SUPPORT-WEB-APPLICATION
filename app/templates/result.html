@@ -212,7 +212,6 @@
                 Validated via <span class="font-semibold text-soil-800">{{ pest.match_method }}</span>
               </span>
               <span class="text-soil-600">AI class: <span class="font-mono text-[11px] text-soil-800">{{ pest.ai_class }}</span></span>
-              <span class="text-soil-600">{{ pest.product_count }} product record{{ '' if pest.product_count == 1 else 's' }} matched</span>
               {% if pest.profile %}
                 <a href="{{ url_for('main.pest_detail', slug=pest.profile.slug) }}" class="no-print ml-auto font-semibold text-leaf-700 hover:text-leaf-900">Full knowledge base entry &rarr;</a>
               {% endif %}

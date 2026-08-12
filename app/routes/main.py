@@ -166,11 +166,9 @@ def pest_detail(slug: str):
     # Find the AI class that maps to this pest so the page can show the link
     # between the trained model and the knowledge base entry.
     linked_class = None
-    products: list = []
     for ai_class, entry in expert_mapping.CLASS_MAPPING.items():
         if entry["kb_name"].lower() == pest["common_name"].lower():
             linked_class = ai_class
-            products = knowledge_base.products_for(entry.get("product_labels", []))
             break
 
     metrics = metrics_service.load()
@@ -183,7 +181,6 @@ def pest_detail(slug: str):
     return render_template(
         "pest_detail.html",
         pest=pest,
-        products=products,
         linked_class=linked_class,
         class_metrics=class_metrics,
     )

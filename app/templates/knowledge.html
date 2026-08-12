@@ -19,7 +19,6 @@
       <dl class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {% set cards = [
           (stats.pest_count, 'Pest profiles'),
-          (stats.product_count, 'Product records'),
           (stats.unique_active_ingredients, 'Active ingredients'),
           (stats.biological_option_count, 'Biological agents')
         ] %}
@@ -30,13 +29,7 @@
           </div>
         {% endfor %}
       </dl>
-      {% if stats.restricted_use_count %}
-        <p class="mt-3 text-xs text-soil-500">
-          <span class="rounded bg-orange-100 px-1.5 py-0.5 font-bold text-orange-700">RUP</span>
-          {{ stats.restricted_use_count }} of the {{ stats.product_count }} product records are
-          restricted-use pesticides requiring a certified applicator.
-        </p>
-      {% endif %}
+
     {% endif %}
 
     <form method="get" action="{{ url_for('main.knowledge') }}" class="mt-6 flex max-w-xl gap-2">

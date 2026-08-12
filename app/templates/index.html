@@ -51,7 +51,7 @@
             {% set components = [
               ('Classification model', status.model.ready, status.model.error, status.model.classes ~ ' classes loaded'),
               ('OOD rejection layer', status.ood.ready, none, 'Calibrated' if status.ood.calibrated else 'Default thresholds + relevance gate'),
-              ('Excel knowledge base', status.knowledge_base.ready, status.knowledge_base.error, (status.knowledge_base.pest_count|default(0)) ~ ' pests, ' ~ (status.knowledge_base.product_count|default(0)) ~ ' products'),
+              ('Excel knowledge base', status.knowledge_base.ready, status.knowledge_base.error, (status.knowledge_base.pest_count|default(0)) ~ ' pests'),
               ('Cloudinary image store', status.cloudinary.ready, status.cloudinary.error, 'Folder ' ~ status.cloudinary.folder),
               ('Firestore records', status.firestore.ready, status.firestore.error, 'Collection ' ~ status.firestore.collection)
             ] %}

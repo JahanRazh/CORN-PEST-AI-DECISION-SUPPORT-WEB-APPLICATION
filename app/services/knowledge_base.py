@@ -6,11 +6,6 @@ symptoms, recommended active ingredients, IRAC mode-of-action groups,
 biological control options, application timing, IPM guidance, environmental
 considerations and economic treatment thresholds.
 
-Sheet2 is a product-level reference table (pest -> active ingredient -> trade
-name -> pre-harvest interval -> IRAC group -> threshold). It uses a merged-cell
-layout where the pest name appears only on the first row of each block, so the
-pest column is forward-filled during parsing.
-
 The workbook is read once at start-up and cached; a reload() hook is exposed so
 an updated Excel file can be picked up without restarting Flask.
 """
@@ -29,7 +24,7 @@ from app import config
 logger = logging.getLogger(__name__)
 
 _lock = threading.Lock()
-_cache: dict[str, Any] = {"pests": None, "products": None, "error": None}
+_cache: dict[str, Any] = {"pests": None, "error": None}
 
 # The workbook was authored on Windows and contains cp1252 bytes that arrive as
 # replacement characters, e.g. 1-1/4" appears as "1-1/4<?>". Repair them so the
@@ -134,67 +129,7 @@ def _load_pests() -> list[dict[str, Any]]:
     return records
 
 
-def _load_products() -> list[dict[str, Any]]:
-    """Parse the product reference table (Sheet2)."""
-    frame = pd.read_excel(
-        config.KNOWLEDGE_BASE_PATH, sheet_name="Sheet2", header=1
-    )
-    frame.columns = [
-        "pest",
-        "active_ingredient",
-        "trade_name",
-        "phi_days",
-        "moa",
-        "guideline",
-    ][: len(frame.columns)]
 
-    # Merged cells leave the pest name only on the first row of each block.
-    frame["pest"] = frame["pest"].ffill()
-
-    records: list[dict[str, Any]] = []
-    current_section = ""
-
-    for _, row in frame.iterrows():
-        pest = clean_text(row.get("pest"))
-        ingredient = clean_text(row.get("active_ingredient"))
-        if not pest or not ingredient:
-            continue
-
-        # "Pre-Mixes" is a sub-heading inside a pest block, not a product.
-        if ingredient.lower() in {"pre-mixes", "premixes", "pre mixes"}:
-            current_section = "Pre-Mix"
-            continue
-        if ingredient.lower() == "active ingredient(s)":
-            continue
-
-        # A restricted-use product is marked with a trailing asterisk.
-        restricted = ingredient.endswith("*")
-        records.append(
-            {
-                "pest": pest,
-                "active_ingredient": ingredient.rstrip("*").strip(),
-                "restricted_use": restricted,
-                "trade_name": clean_text(row.get("trade_name")),
-                "phi_days": _parse_phi(row.get("phi_days")),
-                "phi_raw": clean_text(row.get("phi_days")),
-                "moa_group": clean_text(row.get("moa")),
-                "guideline": clean_text(row.get("guideline")),
-                "product_type": current_section or "Single active ingredient",
-            }
-        )
-        current_section = ""
-
-    logger.info("Knowledge base: %d product records loaded", len(records))
-    return records
-
-
-def _parse_phi(value: Any) -> int | None:
-    """Pre-harvest interval in days; the sheet footnotes some values."""
-    text = clean_text(value)
-    if not text:
-        return None
-    match = re.search(r"\d+", text)
-    return int(match.group()) if match else None
 
 
 def slugify(text: str) -> str:
@@ -214,7 +149,6 @@ def _ensure_loaded() -> None:
                     f"{config.KNOWLEDGE_BASE_PATH}"
                 )
             _cache["pests"] = _load_pests()
-            _cache["products"] = _load_products()
         except Exception as exc:
             logger.exception("Knowledge base failed to load")
             _cache["error"] = str(exc)
@@ -224,7 +158,6 @@ def reload() -> None:
     """Drop the cache so an edited workbook is re-read on next access."""
     with _lock:
         _cache["pests"] = None
-        _cache["products"] = None
         _cache["error"] = None
     _ensure_loaded()
 
@@ -244,11 +177,6 @@ def all_pests() -> list[dict[str, Any]]:
     return _cache["pests"] or []
 
 
-def all_products() -> list[dict[str, Any]]:
-    _ensure_loaded()
-    return _cache["products"] or []
-
-
 def find_pest(common_name: str) -> dict[str, Any] | None:
     """Exact (case-insensitive) lookup of a pest profile by common name."""
     target = (common_name or "").strip().lower()
@@ -265,25 +193,20 @@ def find_pest_by_slug(slug: str) -> dict[str, Any] | None:
     return None
 
 
-def products_for(pest_labels: list[str]) -> list[dict[str, Any]]:
-    """Return Sheet2 products whose pest label matches any of the given names."""
-    wanted = {label.strip().lower() for label in pest_labels if label}
-    return [p for p in all_products() if p["pest"].strip().lower() in wanted]
+
 
 
 def stats() -> dict[str, Any]:
     """Summary counts for the knowledge base page."""
     pests = all_pests()
-    products = all_products()
-    ingredients = {p["active_ingredient"].lower() for p in products}
     biologicals: set[str] = set()
     for pest in pests:
         biologicals.update(b.lower() for b in pest["biological_controls"])
     return {
         "pest_count": len(pests),
-        "product_count": len(products),
-        "unique_active_ingredients": len(ingredients),
+        "product_count": 0,
+        "unique_active_ingredients": 0,
         "biological_option_count": len(biologicals),
         "pest_groups": sorted({p["pest_group"] for p in pests if p["pest_group"]}),
-        "restricted_use_count": sum(1 for p in products if p["restricted_use"]),
+        "restricted_use_count": 0,
     }
