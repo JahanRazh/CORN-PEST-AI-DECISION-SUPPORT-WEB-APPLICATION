@@ -200,12 +200,14 @@ def stats() -> dict[str, Any]:
     """Summary counts for the knowledge base page."""
     pests = all_pests()
     biologicals: set[str] = set()
+    active_ingredients: set[str] = set()
     for pest in pests:
         biologicals.update(b.lower() for b in pest["biological_controls"])
+        active_ingredients.update(a.lower() for a in pest["active_ingredients"])
     return {
         "pest_count": len(pests),
         "product_count": 0,
-        "unique_active_ingredients": 0,
+        "unique_active_ingredients": len(active_ingredients),
         "biological_option_count": len(biologicals),
         "pest_groups": sorted({p["pest_group"] for p in pests if p["pest_group"]}),
         "restricted_use_count": 0,
