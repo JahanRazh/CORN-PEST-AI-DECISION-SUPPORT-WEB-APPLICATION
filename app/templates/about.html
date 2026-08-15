@@ -67,7 +67,7 @@
     <div class="mt-5 grid gap-4 sm:grid-cols-2">
       {% set signals = [
         ('MSP', 'Maximum softmax probability',
-         'Reject when the top probability falls below ' ~ ood_config.msp_threshold ~ '. The canonical OOD baseline.',
+         'Reject when the top probability falls below ' ~ (ood_config.msp_threshold * 100)|int ~ '%. The canonical OOD baseline.',
          'Hendrycks &amp; Gimpel, ICLR 2017'),
         ('ENT', 'Normalised predictive entropy',
          'Reject when entropy exceeds ' ~ ood_config.entropy_threshold ~ ' after dividing by log(K). A flat distribution means the model is committing to nothing.',

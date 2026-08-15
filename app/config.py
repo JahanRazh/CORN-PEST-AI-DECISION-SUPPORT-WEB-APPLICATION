@@ -54,7 +54,7 @@ MAX_CONTENT_LENGTH = 10 * 1024 * 1024  # 10 MB
 # ---------------------------------------------------------------------------
 OOD_DEFAULTS = {
     # Maximum softmax probability. Below this the prediction is not trusted.
-    "msp_threshold": 0.55,
+    "msp_threshold": 0.85,
     # Shannon entropy of the softmax vector, normalised to [0, 1] by log(K).
     # Above this the distribution is too flat to commit to one class.
     "entropy_threshold": 0.45,
