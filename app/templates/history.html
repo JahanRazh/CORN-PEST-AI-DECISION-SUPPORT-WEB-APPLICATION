@@ -12,154 +12,175 @@
           they are evidence that the OOD layer is doing its job.
         </p>
       </div>
-      <a href="{{ url_for('main.index') }}" class="flex items-center gap-1.5 rounded-lg bg-leaf-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-leaf-800">
-        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+      <a href="{{ url_for('main.index') }}"
+        class="flex items-center gap-1.5 rounded-lg bg-leaf-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-leaf-800">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"
+          aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
         New detection
       </a>
     </div>
 
     {% if stats.available and stats.total %}
-      <dl class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {% set cards = [
-          (stats.total, 'Total analyses', 'text-soil-900'),
-          (stats.accepted, 'Pests identified', 'text-leaf-700'),
-          (stats.rejected, 'Rejected as unknown', 'text-red-600'),
-          ((stats.mean_confidence ~ '%') if stats.mean_confidence is not none else 'n/a', 'Mean confidence', 'text-sky-700')
-        ] %}
-        {% for value, label, tone in cards %}
-          <div class="rounded-xl border border-soil-200 bg-soil-50/60 px-4 py-3">
-            <dt class="text-xs font-medium uppercase tracking-wide text-soil-400">{{ label }}</dt>
-            <dd class="mt-0.5 text-2xl font-bold {{ tone }}">{{ value }}</dd>
-          </div>
-        {% endfor %}
-      </dl>
-      <p class="mt-3 text-xs text-soil-500">
-        Rejection rate <span class="font-semibold text-soil-700">{{ stats.rejection_rate }}%</span>
-        across the last {{ stats.total }} record{{ '' if stats.total == 1 else 's' }}.
-      </p>
+    <dl class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {% set cards = [
+      (stats.total, 'Total analyses', 'text-soil-900'),
+      (stats.accepted, 'Pests identified', 'text-leaf-700'),
+      (stats.rejected, 'Rejected as unknown', 'text-red-600'),
+      ((stats.mean_confidence ~ '%') if stats.mean_confidence is not none else 'n/a', 'Mean confidence', 'text-sky-700')
+      ] %}
+      {% for value, label, tone in cards %}
+      <div class="rounded-xl border border-soil-200 bg-soil-50/60 px-4 py-3">
+        <dt class="text-xs font-medium uppercase tracking-wide text-soil-400">{{ label }}</dt>
+        <dd class="mt-0.5 text-2xl font-bold {{ tone }}">{{ value }}</dd>
+      </div>
+      {% endfor %}
+    </dl>
+    <p class="mt-3 text-xs text-soil-500">
+      Rejection rate <span class="font-semibold text-soil-700">{{ stats.rejection_rate }}%</span>
+      across the last {{ stats.total }} record{{ '' if stats.total == 1 else 's' }}.
+    </p>
     {% endif %}
   </div>
 </section>
 
 <section class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
   {% if not available %}
-    <div class="rounded-2xl border border-amber-200 bg-amber-50 p-6">
-      <h2 class="text-base font-bold text-amber-900">History is unavailable</h2>
-      <p class="mt-1.5 text-sm leading-relaxed text-amber-800">{{ error }}</p>
-      <p class="mt-3 text-xs text-amber-700">
-        Detections still run and still display; only the saved record list needs Firestore.
-        Check that <span class="font-mono">serviceAccountKey.json</span> is present and that the
-        project has a Firestore database created.
-      </p>
-    </div>
+  <div class="rounded-2xl border border-amber-200 bg-amber-50 p-6">
+    <h2 class="text-base font-bold text-amber-900">History is unavailable</h2>
+    <p class="mt-1.5 text-sm leading-relaxed text-amber-800">{{ error }}</p>
+    <p class="mt-3 text-xs text-amber-700">
+      Detections still run and still display; only the saved record list needs Firestore.
+      Check that <span class="font-mono">serviceAccountKey.json</span> is present and that the
+      project has a Firestore database created.
+    </p>
+  </div>
 
   {% elif not records %}
-    <div class="rounded-2xl border-2 border-dashed border-soil-300 bg-white p-12 text-center">
-      <svg class="mx-auto h-12 w-12 text-soil-300" fill="none" stroke="currentColor" stroke-width="1.4" viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+  <div class="rounded-2xl border-2 border-dashed border-soil-300 bg-white p-12 text-center">
+    <svg class="mx-auto h-12 w-12 text-soil-300" fill="none" stroke="currentColor" stroke-width="1.4"
+      viewBox="0 0 24 24" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <h2 class="mt-4 text-base font-bold text-soil-900">Nothing here yet</h2>
+    <p class="mx-auto mt-1.5 max-w-sm text-sm text-soil-500">
+      Run your first detection and it will appear here with its image, verdict and recommendation.
+    </p>
+    <a href="{{ url_for('main.index') }}"
+      class="mt-5 inline-flex items-center gap-1.5 rounded-xl bg-leaf-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-leaf-800">
+      Analyse an image
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
       </svg>
-      <h2 class="mt-4 text-base font-bold text-soil-900">Nothing here yet</h2>
-      <p class="mx-auto mt-1.5 max-w-sm text-sm text-soil-500">
-        Run your first detection and it will appear here with its image, verdict and recommendation.
-      </p>
-      <a href="{{ url_for('main.index') }}" class="mt-5 inline-flex items-center gap-1.5 rounded-xl bg-leaf-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-leaf-800">
-        Analyse an image
-        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-      </a>
-    </div>
+    </a>
+  </div>
 
   {% else %}
-    <!-- Filter chips, handled client-side -->
-    <div class="mb-5 flex flex-wrap items-center gap-2" role="group" aria-label="Filter history">
-      {% for key, label in [('all', 'All'), ('accepted', 'Identified'), ('rejected', 'Rejected')] %}
-        <button type="button" data-filter="{{ key }}"
-                class="history-filter rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors
+  <!-- Filter chips, handled client-side -->
+  <div class="mb-5 flex flex-wrap items-center gap-2" role="group" aria-label="Filter history">
+    {% for key, label in [('all', 'All'), ('accepted', 'Identified'), ('rejected', 'Rejected')] %}
+    <button type="button" data-filter="{{ key }}"
+      class="history-filter rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors
                        {{ 'border-leaf-300 bg-leaf-50 text-leaf-800' if key == 'all' else 'border-soil-200 bg-white text-soil-600 hover:bg-soil-50' }}"
-                aria-pressed="{{ 'true' if key == 'all' else 'false' }}">{{ label }}</button>
-      {% endfor %}
-      <span class="ml-auto text-xs text-soil-400" id="historyCount">{{ records|length }} shown</span>
-    </div>
+      aria-pressed="{{ 'true' if key == 'all' else 'false' }}">{{ label }}</button>
+    {% endfor %}
+    <span class="ml-auto text-xs text-soil-400" id="historyCount">{{ records|length }} shown</span>
+  </div>
 
-    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3" id="historyGrid">
-      {% for record in records %}
-        {% set rejected = record.status == 'rejected' %}
-        <article class="history-card group flex flex-col overflow-hidden rounded-2xl border border-soil-200 bg-white transition-shadow hover:shadow-md"
-                 data-status="{{ record.status }}">
-          <a href="{{ url_for('main.result', detection_id=record.detection_id) }}" class="block">
-            <div class="relative aspect-[4/3] bg-soil-900">
-              {% if record.image and record.image.uploaded %}
-                <img src="{{ record.image.thumbnail_url or record.image.url }}" alt=""
-                     loading="lazy" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]">
-              {% else %}
-                <div class="grid h-full place-items-center text-soil-600">
-                  <svg class="h-9 w-9" fill="none" stroke="currentColor" stroke-width="1.4" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                </div>
-              {% endif %}
-              <span class="absolute left-2.5 top-2.5 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider backdrop-blur
-                           {{ 'bg-red-500/90 text-white' if rejected else 'bg-leaf-500/90 text-white' }}">
-                {{ 'Rejected' if rejected else 'Identified' }}
-              </span>
-            </div>
-          </a>
-
-          <div class="flex flex-1 flex-col p-4">
-            <a href="{{ url_for('main.result', detection_id=record.detection_id) }}" class="block">
-              <h2 class="truncate text-sm font-bold text-soil-900 group-hover:text-leaf-800">
-                {% if rejected %}
-                  Unknown / out of distribution
-                {% else %}
-                  {{ record.pest.display_name if record.pest else record.prediction.class_name|shortclass }}
-                {% endif %}
-              </h2>
-              {% if not rejected and record.pest and record.pest.scientific_name %}
-                <p class="truncate text-xs italic text-soil-400">{{ record.pest.scientific_name }}</p>
-              {% endif %}
-            </a>
-
-            {% if not rejected %}
-              <div class="mt-3">
-                <div class="flex items-baseline justify-between text-[11px]">
-                  <span class="font-medium text-soil-500">Confidence</span>
-                  <span class="font-mono font-bold text-soil-800">{{ record.prediction.confidence_percentage }}%</span>
-                </div>
-                <div class="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-soil-100">
-                  <div class="meter-fill h-full rounded-full bg-leaf-600" style="width:0%" data-meter="{{ record.prediction.confidence_percentage }}"></div>
-                </div>
-              </div>
-
-              {% if record.recommendation %}
-                {% set tone = {
-                  'treat_now':  ('bg-red-50','text-red-700','Immediate action'),
-                  'treat_soon': ('bg-amber-50','text-amber-700','Prepare to act'),
-                  'preventive': ('bg-sky-50','text-sky-700','Preventive'),
-                  'monitor':    ('bg-leaf-50','text-leaf-700','Monitor')
-                }.get(record.recommendation.action_level, ('bg-soil-100','text-soil-600','n/a')) %}
-                <span class="mt-3 inline-block rounded-md {{ tone[0] }} px-2 py-1 text-[10px] font-bold uppercase tracking-wide {{ tone[1] }}">{{ tone[2] }}</span>
-              {% endif %}
-            {% else %}
-              <p class="mt-3 line-clamp-3 text-xs leading-relaxed text-soil-500">{{ record.ood.reason }}</p>
-            {% endif %}
-
-            <div class="mt-4 flex items-center justify-between gap-2 border-t border-soil-100 pt-3">
-              <div class="min-w-0">
-                <p class="truncate text-[11px] text-soil-400" title="{{ record.filename }}">{{ record.filename }}</p>
-                <p class="font-mono text-[10px] text-soil-400">{{ record.timestamp[:16]|replace('T', ' ') }}</p>
-              </div>
-              <form method="post" action="{{ url_for('main.delete_detection', detection_id=record.detection_id) }}">
-                <button type="submit" class="grid h-8 w-8 place-items-center rounded-lg text-soil-400 hover:bg-red-50 hover:text-red-600"
-                        aria-label="Delete this detection">
-                  <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                </button>
-              </form>
-            </div>
+  <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3" id="historyGrid">
+    {% for record in records %}
+    {% set rejected = record.status == 'rejected' %}
+    <article
+      class="history-card group flex flex-col overflow-hidden rounded-2xl border border-soil-200 bg-white transition-shadow hover:shadow-md"
+      data-status="{{ record.status }}">
+      <a href="{{ url_for('main.result', detection_id=record.detection_id) }}" class="block">
+        <div class="relative aspect-[4/3] bg-soil-900">
+          {% if record.image and record.image.uploaded %}
+          <img src="{{ record.image.thumbnail_url or record.image.url }}" alt="" loading="lazy"
+            class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]">
+          {% else %}
+          <div class="grid h-full place-items-center text-soil-600">
+            <svg class="h-9 w-9" fill="none" stroke="currentColor" stroke-width="1.4" viewBox="0 0 24 24"
+              aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
           </div>
-        </article>
-      {% endfor %}
-    </div>
+          {% endif %}
+          <span class="absolute left-2.5 top-2.5 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider backdrop-blur
+                           {{ 'bg-red-500/90 text-white' if rejected else 'bg-leaf-500/90 text-white' }}">
+            {{ 'Rejected' if rejected else 'Identified' }}
+          </span>
+        </div>
+      </a>
 
-    <p class="mt-6 text-center text-xs text-soil-400">
-      Showing the most recent {{ records|length }} record{{ '' if records|length == 1 else 's' }}.
-    </p>
+      <div class="flex flex-1 flex-col p-4">
+        <a href="{{ url_for('main.result', detection_id=record.detection_id) }}" class="block">
+          <h2 class="truncate text-sm font-bold text-soil-900 group-hover:text-leaf-800">
+            {% if rejected %}
+            Unknown / out of distribution
+            {% else %}
+            {{ record.pest.display_name if record.pest else record.prediction.class_name|shortclass }}
+            {% endif %}
+          </h2>
+          {% if not rejected and record.pest and record.pest.scientific_name %}
+          <p class="truncate text-xs italic text-soil-400">{{ record.pest.scientific_name }}</p>
+          {% endif %}
+        </a>
+
+        {% if not rejected %}
+        <div class="mt-3">
+          <div class="flex items-baseline justify-between text-[11px]">
+            <span class="font-medium text-soil-500">Confidence</span>
+            <span class="font-mono font-bold text-soil-800">{{ record.prediction.confidence_percentage }}%</span>
+          </div>
+          <div class="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-soil-100">
+            <div class="meter-fill h-full rounded-full bg-leaf-600" style="width:0%"
+              data-meter="{{ record.prediction.confidence_percentage }}"></div>
+          </div>
+        </div>
+
+        {% if record.recommendation %}
+        {% set tone = {
+        'treat_now': ('bg-red-50','text-red-700','Immediate action'),
+        'treat_soon': ('bg-amber-50','text-amber-700','Prepare to act'),
+        'preventive': ('bg-sky-50','text-sky-700','Preventive'),
+        'monitor': ('bg-leaf-50','text-leaf-700','Monitor')
+        }.get(record.recommendation.action_level, ('bg-soil-100','text-soil-600','n/a')) %}
+        <span
+          class="mt-3 inline-block rounded-md {{ tone[0] }} px-2 py-1 text-[10px] font-bold uppercase tracking-wide {{ tone[1] }}">{{
+          tone[2] }}</span>
+        {% endif %}
+        {% else %}
+        <p class="mt-3 line-clamp-3 text-xs leading-relaxed text-soil-500">{{ record.ood.reason }}</p>
+        {% endif %}
+
+        <div class="mt-4 flex items-center justify-between gap-2 border-t border-soil-100 pt-3">
+          <div class="min-w-0">
+            <p class="truncate text-[11px] text-soil-400" title="{{ record.filename }}">{{ record.filename }}</p>
+            <p class="font-mono text-[10px] text-soil-400">{{ record.timestamp[:16]|replace('T', ' ') }}</p>
+          </div>
+          <form method="post" action="{{ url_for('main.delete_detection', detection_id=record.detection_id) }}">
+            <button type="submit"
+              class="grid h-8 w-8 place-items-center rounded-lg text-soil-400 hover:bg-red-50 hover:text-red-600"
+              aria-label="Delete this detection">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"
+                aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </form>
+        </div>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+
+  <p class="mt-6 text-center text-xs text-soil-400">
+    Showing the most recent {{ records|length }} record{{ '' if records|length == 1 else 's' }}.
+  </p>
   {% endif %}
 </section>
 {% endblock %}
