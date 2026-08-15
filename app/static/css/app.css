@@ -20,6 +20,16 @@
 }
 @keyframes scanSweep { 0%,100% { top: 4%; } 50% { top: 96%; } }
 
+/* Float animation for the 3D hero image */
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+  100% { transform: translateY(0px); }
+}
+
 /* --- Confidence and urgency meters ------------------------------------ */
 .meter-fill { transition: width .9s cubic-bezier(.22,1,.36,1); }
 
