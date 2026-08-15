@@ -145,8 +145,7 @@
                 <p class="truncate text-[11px] text-soil-400" title="{{ record.filename }}">{{ record.filename }}</p>
                 <p class="font-mono text-[10px] text-soil-400">{{ record.timestamp[:16]|replace('T', ' ') }}</p>
               </div>
-              <form method="post" action="{{ url_for('main.delete_detection', detection_id=record.detection_id) }}"
-                    onsubmit="return confirm('Delete this detection record and its stored image? This cannot be undone.');">
+              <form method="post" action="{{ url_for('main.delete_detection', detection_id=record.detection_id) }}">
                 <button type="submit" class="grid h-8 w-8 place-items-center rounded-lg text-soil-400 hover:bg-red-50 hover:text-red-600"
                         aria-label="Delete this detection">
                   <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
