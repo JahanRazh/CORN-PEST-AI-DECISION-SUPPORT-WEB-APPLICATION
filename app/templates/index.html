@@ -133,6 +133,25 @@
           </p>
         </div>
       </div>
+
+      <!-- Video Block -->
+      <div class="mt-6 overflow-hidden rounded-2xl border border-soil-200 bg-black shadow-lg relative group transition-transform duration-500 hover:shadow-xl hover:-translate-y-1">
+        <video autoplay loop muted playsinline class="w-full h-auto object-cover opacity-85 transition-opacity duration-500 group-hover:opacity-100">
+          <source src="{{ url_for('static', filename='videos/corn pest .mp4') }}" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+        <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent pointer-events-none transition-opacity duration-500 group-hover:opacity-80"></div>
+        <div class="absolute bottom-5 left-5 pointer-events-none flex flex-col gap-1">
+           <span class="inline-flex w-fit items-center gap-1.5 rounded-full bg-black/50 px-2.5 py-1 text-[10px] font-bold tracking-wider text-white backdrop-blur-sm border border-white/10">
+             <span class="relative flex h-1.5 w-1.5">
+               <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
+               <span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-500"></span>
+             </span>
+             FIELD FOOTAGE
+           </span>
+           <h3 class="text-white font-bold text-sm drop-shadow-md">Corn pest damage analysis</h3>
+        </div>
+      </div>
     </div>
 
     <!-- ---------- Step 2: field context ---------- -->
