@@ -15,16 +15,13 @@ from __future__ import annotations
 
 import logging
 
-from flask import Blueprint, jsonify, render_template, request
+from flask import Blueprint, jsonify, request
 
 from app.services import (
     cloud_store,
     detection_pipeline,
-    expert_mapping,
     knowledge_base,
     metrics_service,
-    model_service,
-    rules_engine,
 )
 
 logger = logging.getLogger(__name__)
