@@ -22,15 +22,13 @@
 
         <h1 class="mt-5 text-4xl font-extrabold leading-[1.1] tracking-tight text-soil-900 sm:text-5xl">
           Detection of Predominant Corn-Infesting Pests and Insects with Context-Aware<br>
-          <span class="bg-gradient-to-r from-leaf-600 to-leaf-800 bg-clip-text text-transparent">Chemical and
-            Biological Control Recommendations</span>
+          <span class="bg-gradient-to-r from-leaf-600 to-leaf-800 bg-clip-text text-transparent">Pest Identification</span>
         </h1>
 
         <p class="mt-5 max-w-xl text-[15px] leading-relaxed text-soil-600">
-          Upload a photograph of a corn pest and describe the field conditions. The classifier
+          Upload a photograph of a corn pest. The classifier
           names the species, an out-of-distribution layer rejects anything it does not recognise,
-          an expert mapping layer validates the identity against the knowledge base, and a
-          rule-based engine produces chemical, biological and IPM recommendations you can defend.
+          and an expert mapping layer validates the identity against the knowledge base.
         </p>
 
         <dl class="mt-8 grid max-w-lg grid-cols-3 gap-4">
@@ -169,21 +167,18 @@
 <!-- ==================== How it works ==================== -->
 <section class="border-t border-soil-200 bg-white">
   <div class="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-    <h2 class="text-center text-2xl font-bold tracking-tight text-soil-900">Four layers, four responsibilities</h2>
+    <h2 class="text-center text-2xl font-bold tracking-tight text-soil-900">Three layers, three responsibilities</h2>
     <p class="mx-auto mt-2 max-w-2xl text-center text-sm text-soil-500">
       Each layer answers exactly one question, and the answer of each is shown to you in the result.
     </p>
 
-    <ol class="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+    <ol class="mt-10 grid gap-5 md:grid-cols-3 lg:grid-cols-3">
       {% set layers = [
       ('AI model', 'Identifies the pest', 'EfficientNetB0 fine-tuned on ten corn pest classes returns a ranked
       probability distribution.', 'from-leaf-500 to-leaf-700'),
       ('OOD layer', 'Rejects unknown images', 'A relevance gate plus four distributional signals vote on whether the
       image belongs to the known distribution at all.', 'from-sky-500 to-sky-700'),
-      ('Expert mapping', 'Validates the identity', 'Reconciles the model class name with the agricultural pest entity
-      and reports any taxonomic discrepancy.', 'from-violet-500 to-violet-700'),
-      ('Rule engine', 'Generates recommendations', 'Applies IPM doctrine to the field context to produce ranked
-      chemical, biological and integrated options.', 'from-corn-500 to-corn-700')
+      ('Expert mapping', 'Validates the identity', 'Reconciles the model class name with the agricultural pest entity.', 'from-violet-500 to-violet-700')
       ] %}
       {% for title, role, detail, gradient in layers %}
       <li class="relative rounded-2xl border border-soil-200 bg-white p-5">

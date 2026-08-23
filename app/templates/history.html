@@ -65,7 +65,7 @@
     </svg>
     <h2 class="mt-4 text-base font-bold text-soil-900">Nothing here yet</h2>
     <p class="mx-auto mt-1.5 max-w-sm text-sm text-soil-500">
-      Run your first detection and it will appear here with its image, verdict and recommendation.
+      Run your first detection and it will appear here with its image and verdict.
     </p>
     <a href="{{ url_for('main.index') }}"
       class="mt-5 inline-flex items-center gap-1.5 rounded-xl bg-leaf-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-leaf-800">
@@ -141,17 +141,7 @@
           </div>
         </div>
 
-        {% if record.recommendation %}
-        {% set tone = {
-        'treat_now': ('bg-red-50','text-red-700','Immediate action'),
-        'treat_soon': ('bg-amber-50','text-amber-700','Prepare to act'),
-        'preventive': ('bg-sky-50','text-sky-700','Preventive'),
-        'monitor': ('bg-leaf-50','text-leaf-700','Monitor')
-        }.get(record.recommendation.action_level, ('bg-soil-100','text-soil-600','n/a')) %}
-        <span
-          class="mt-3 inline-block rounded-md {{ tone[0] }} px-2 py-1 text-[10px] font-bold uppercase tracking-wide {{ tone[1] }}">{{
-          tone[2] }}</span>
-        {% endif %}
+
         {% else %}
         <p class="mt-3 line-clamp-3 text-xs leading-relaxed text-soil-500">{{ record.ood.reason }}</p>
         {% endif %}

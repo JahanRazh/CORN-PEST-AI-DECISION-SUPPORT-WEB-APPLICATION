@@ -121,7 +121,6 @@
       {% if pest.biological_controls %}
         <div class="rounded-2xl border border-soil-200 bg-white p-6">
           <h2 class="text-base font-bold tracking-tight text-soil-900">Biological control agents</h2>
-          <p class="mt-0.5 text-xs text-soil-500">Ranked by the rule engine at recommendation time according to weather and growth stage.</p>
           <ul class="mt-4 grid gap-2.5 sm:grid-cols-2">
             {% for agent in pest.biological_controls %}
               <li class="flex items-start gap-2.5 rounded-lg border border-leaf-200 bg-leaf-50 p-3">

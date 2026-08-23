@@ -8,25 +8,6 @@ product reference sheet uses yet another vocabulary in which several species
 are grouped together ("Armyworm species", "Cutworms (Black, Dingy, Variegated,
 Claybacked)"). Nothing downstream can be trusted until those three vocabularies
 are reconciled, which is this layer's job.
-
-It also performs a genuine validation step rather than a blind lookup. Three of
-the ten trained classes carry taxonomic discrepancies against the expert sheet:
-
-  * Black Cut Worm      model: Agrotis ypsilon    sheet: Agrotis ipsilon
-    -> Orthographic variant of the same species. Both spellings appear in the
-       literature; ipsilon is the accepted form. Harmless.
-
-  * Wire Worm           model: Agriotes lineatus  sheet: Limonius spp.
-    -> Different genera within the same family (Elateridae). Management is
-       genus-independent, so the recommendation still holds, but the mismatch
-       is surfaced rather than hidden.
-
-  * Corn Borer          model: Ostrinia furnacalis (Asian corn borer)
-                        sheet thresholds cite European/Southwestern borers
-    -> Chemical options overlap; economic thresholds are region-specific.
-
-Reporting these as validation notes is what separates an expert system from a
-lookup table, and gives the result page something defensible to display.
 """
 
 from __future__ import annotations
@@ -52,25 +33,12 @@ CLASS_MAPPING: dict[str, dict[str, Any]] = {
         "kb_name": "Beet Armyworm",
         "scientific_name": "Spodoptera exigua",
         "aliases": ["Small Mottled Willow Moth"],
-        "notes": [
-            "The product reference table groups this species under the generic "
-            "'Armyworm species' block, so the listed products are shared with "
-            "Fall Armyworm rather than beet-armyworm-specific."
-        ],
     },
     "Black Cut Worm-Agrotis ypsilon": {
         "display_name": "Black Cutworm",
         "kb_name": "Black Cutworm",
         "scientific_name": "Agrotis ipsilon",
         "aliases": ["Agrotis ypsilon", "Greasy Cutworm"],
-        "validation": {
-            "severity": "info",
-            "message": (
-                "The trained class is labelled 'Agrotis ypsilon' while the "
-                "knowledge base uses 'Agrotis ipsilon'. These are orthographic "
-                "variants of the same species; 'ipsilon' is the accepted form."
-            ),
-        },
     },
     "Corn Aphid-Rhopalosiphum maidis": {
         "display_name": "Corn Aphid",
@@ -83,16 +51,6 @@ CLASS_MAPPING: dict[str, dict[str, Any]] = {
         "kb_name": "Corn Borer",
         "scientific_name": "Ostrinia furnacalis",
         "aliases": ["Asian Corn Borer", "Ostrinia nubilalis"],
-        "validation": {
-            "severity": "caution",
-            "message": (
-                "The trained class is the Asian corn borer (Ostrinia "
-                "furnacalis), while the economic thresholds in the knowledge "
-                "base are written for the European and Southwestern corn "
-                "borers. Registered chemistry overlaps closely, but verify "
-                "threshold figures against local extension guidance."
-            ),
-        },
     },
     "Corn Ear Worm-Helicoverpa armigera": {
         "display_name": "Corn Earworm",
@@ -111,15 +69,6 @@ CLASS_MAPPING: dict[str, dict[str, Any]] = {
         "kb_name": "Flea Beetle",
         "scientific_name": "Phyllotreta spp.",
         "aliases": ["Corn Flea Beetle", "Chaetocnema pulicaria"],
-        "validation": {
-            "severity": "info",
-            "message": (
-                "The knowledge base product table refers to the corn flea "
-                "beetle (Chaetocnema pulicaria), the species of economic "
-                "importance in maize; the trained class covers Phyllotreta "
-                "flea beetles more broadly. Control measures are equivalent."
-            ),
-        },
     },
     "White Grub-Holotrichia spp": {
         "display_name": "White Grub",
@@ -132,16 +81,6 @@ CLASS_MAPPING: dict[str, dict[str, Any]] = {
         "kb_name": "Wireworm",
         "scientific_name": "Limonius spp.",
         "aliases": ["Agriotes lineatus", "Click beetle larvae"],
-        "validation": {
-            "severity": "caution",
-            "message": (
-                "The trained class is labelled 'Agriotes lineatus' while the "
-                "knowledge base profiles 'Limonius spp.'. Both are click "
-                "beetle larvae (family Elateridae) and share the same soil "
-                "management and seed treatment strategy, but they are "
-                "different genera."
-            ),
-        },
     },
 }
 
@@ -157,11 +96,6 @@ class MappingResult:
     match_method: str
     pest_profile: dict[str, Any] | None = None
     aliases: list[str] = field(default_factory=list)
-    validation_notes: list[dict[str, str]] = field(default_factory=list)
-
-    @property
-    def has_warnings(self) -> bool:
-        return any(n["severity"] in {"caution", "warning"} for n in self.validation_notes)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -171,8 +105,6 @@ class MappingResult:
             "matched": self.matched,
             "match_method": self.match_method,
             "aliases": self.aliases,
-            "validation_notes": self.validation_notes,
-            "has_warnings": self.has_warnings,
         }
 
 
@@ -210,7 +142,6 @@ def _fuzzy_kb_lookup(ai_class: str) -> tuple[dict[str, Any] | None, str]:
 def map_class(ai_class: str) -> MappingResult:
     """Resolve an AI class name to a validated agricultural pest entity."""
     entry = CLASS_MAPPING.get(ai_class)
-    notes: list[dict[str, str]] = []
 
     if entry:
         profile = knowledge_base.find_pest(entry["kb_name"])
@@ -220,21 +151,6 @@ def map_class(ai_class: str) -> MappingResult:
             # The mapping table names a row the workbook no longer contains.
             profile, fallback_method = _fuzzy_kb_lookup(ai_class)
             match_method = f"expert mapping table -> {fallback_method}"
-            notes.append(
-                {
-                    "severity": "warning",
-                    "message": (
-                        f"The expert mapping expected a knowledge base entry "
-                        f"named '{entry['kb_name']}' but it was not found in "
-                        f"the workbook. A fallback match was used."
-                    ),
-                }
-            )
-
-        if "validation" in entry:
-            notes.append(entry["validation"])
-        for note in entry.get("notes", []):
-            notes.append({"severity": "info", "message": note})
 
         return MappingResult(
             ai_class=ai_class,
@@ -244,22 +160,11 @@ def map_class(ai_class: str) -> MappingResult:
             match_method=match_method,
             pest_profile=profile,
             aliases=entry.get("aliases", []),
-            validation_notes=notes,
         )
 
     # Class is not in the mapping table at all - the model has been retrained
     # with new classes and the mapping table was not updated.
     profile, method = _fuzzy_kb_lookup(ai_class)
-    notes.append(
-        {
-            "severity": "warning",
-            "message": (
-                f"'{ai_class}' is not registered in the expert mapping table. "
-                f"The system fell back to automatic name matching ({method}). "
-                "Add it to CLASS_MAPPING for a validated result."
-            ),
-        }
-    )
     return MappingResult(
         ai_class=ai_class,
         display_name=profile["common_name"] if profile else ai_class.split("-")[0].strip(),
@@ -268,16 +173,11 @@ def map_class(ai_class: str) -> MappingResult:
         match_method=method,
         pest_profile=profile,
         aliases=[],
-        validation_notes=notes,
     )
 
 
 def coverage_report() -> dict[str, Any]:
-    """Diagnostic: how completely the mapping table covers the trained classes.
-
-    Surfaced on the dashboard so a gap between the model and the knowledge base
-    is visible rather than silent.
-    """
+    """Diagnostic: how completely the mapping table covers the trained classes."""
     from app.services import model_service
 
     class_names = model_service.get_class_names()
@@ -290,13 +190,10 @@ def coverage_report() -> dict[str, Any]:
                 "display_name": result.display_name,
                 "matched": result.matched,
                 "match_method": result.match_method,
-                "note_count": len(result.validation_notes),
-                "has_warnings": result.has_warnings,
             }
         )
     return {
         "total_classes": len(class_names),
         "mapped": sum(1 for r in rows if r["matched"]),
-        "with_warnings": sum(1 for r in rows if r["has_warnings"]),
         "rows": rows,
     }

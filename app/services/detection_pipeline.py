@@ -6,12 +6,11 @@ and assembles the explainable result.
     2. Classify with EfficientNetB0            -> model_service
     3. Reject unknown / out-of-distribution    -> ood_service
     4. Validate the pest identity              -> expert_mapping
-    5. Generate context-aware recommendations  -> rules_engine
-    6. Persist image and record                -> cloud_store
+    5. Persist image and record                -> cloud_store
 
 Each stage appends to a pipeline trace so the result page can show exactly
 which component made which decision - the "decision reasoning" requirement.
-Stages 4-6 are skipped when stage 3 rejects the image, because naming a pest
+Stages 4-5 are skipped when stage 3 rejects the image, because naming a pest
 for an out-of-distribution photograph is precisely the failure this system
 exists to prevent.
 """
@@ -30,7 +29,6 @@ from app.services import (
     knowledge_base,
     model_service,
     ood_service,
-    rules_engine,
 )
 
 logger = logging.getLogger(__name__)
@@ -139,7 +137,6 @@ def run(
     if ood.is_ood:
         record["status"] = "rejected"
         record["pest"] = None
-        record["recommendation"] = None
         record["rejection"] = {
             "title": "Unknown or unrelated image",
             "message": ood.reason,
@@ -153,14 +150,6 @@ def run(
                            "rejected image",
             }
         )
-        trace.append(
-            {
-                "stage": "Recommendation",
-                "component": "Rule-based knowledge system",
-                "outcome": "Skipped - recommendations are never issued without "
-                           "a validated pest identity",
-            }
-        )
     else:
         mapping = expert_mapping.map_class(prediction.class_name)
         trace.append(
@@ -168,37 +157,14 @@ def run(
                 "stage": "Expert validation",
                 "component": "Expert mapping layer",
                 "outcome": f"AI class resolved to '{mapping.display_name}' via "
-                           f"{mapping.match_method}"
-                           + (
-                               f"; {len(mapping.validation_notes)} validation note(s)"
-                               if mapping.validation_notes
-                               else ""
-                           ),
+                           f"{mapping.match_method}",
             }
         )
-
-        recommendation = rules_engine.generate(
-            mapping,
-            confidence=prediction.confidence,
-        )
-        trace.append(
-            {
-                "stage": "Recommendation",
-                "component": "Rule-based knowledge system (Excel knowledge base)",
-                "outcome": f"{len(recommendation.reasoning)} rules fired -> "
-                           f"action level '{recommendation.action_level}', "
-                           f"{len(recommendation.chemical_options)} chemical and "
-                           f"{len(recommendation.biological_options)} biological "
-                           "options",
-            }
-        )
-
         record["status"] = "accepted"
         record["pest"] = {
             **mapping.to_dict(),
             "profile": mapping.pest_profile,
         }
-        record["recommendation"] = recommendation.to_dict()
 
     record["trace"] = trace
 
