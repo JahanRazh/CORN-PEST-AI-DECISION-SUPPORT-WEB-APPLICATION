@@ -38,24 +38,10 @@ def detect():
     if upload is None or not upload.filename:
         return jsonify({"ok": False, "error": "No image was supplied."}), 400
 
-    days_raw = (request.form.get("days_to_harvest") or "").strip()
-    try:
-        days_value = int(days_raw) if days_raw else None
-        if days_value is not None and not 0 <= days_value <= 365:
-            days_value = None
-    except ValueError:
-        days_value = None
-
     try:
         record = detection_pipeline.run(
             upload.read(),
             upload.filename,
-            growth_stage=request.form.get("growth_stage", "vegetative"),
-            severity=request.form.get("severity", "moderate"),
-            weather=request.form.get("weather", "humid"),
-            days_to_harvest=days_value,
-            beneficials_present=request.form.get("beneficials") in {"on", "true", "1"},
-            field_note=request.form.get("field_note", ""),
             persist=request.form.get("persist", "true") != "false",
         )
     except detection_pipeline.DetectionError as exc:
@@ -67,56 +53,6 @@ def detect():
     return jsonify({"ok": True, "record": record})
 
 
-@api_bp.route("/recompute", methods=["POST"])
-def recompute():
-    """Re-run the rule engine for a known pest under different field context.
-
-    This is what makes the result page interactive: changing the growth stage
-    or severity slider updates the recommendation instantly, without paying
-    for another forward pass through the network.
-    """
-    payload = request.get_json(silent=True) or {}
-    ai_class = payload.get("ai_class")
-    if not ai_class:
-        return jsonify({"ok": False, "error": "ai_class is required."}), 400
-
-    if ai_class not in model_service.get_class_names():
-        return jsonify({"ok": False, "error": f"Unknown class '{ai_class}'."}), 400
-
-    days = payload.get("days_to_harvest")
-    if isinstance(days, str):
-        days = int(days) if days.strip().isdigit() else None
-
-    try:
-        confidence = float(payload.get("confidence", 1.0))
-    except (TypeError, ValueError):
-        confidence = 1.0
-
-    mapping = expert_mapping.map_class(ai_class)
-    recommendation = rules_engine.generate(
-        mapping,
-        growth_stage=payload.get("growth_stage", "vegetative"),
-        severity=payload.get("severity", "moderate"),
-        weather=payload.get("weather", "humid"),
-        days_to_harvest=days,
-        beneficials_present=bool(payload.get("beneficials_present")),
-        confidence=confidence,
-    )
-
-    payload_out = recommendation.to_dict()
-
-    # Render the same Jinja partial the result page used on first load, so the
-    # live update and the initial render can never drift apart.
-    html = render_template("partials/_recommendation.html", recommendation=payload_out)
-
-    return jsonify(
-        {
-            "ok": True,
-            "pest": mapping.to_dict(),
-            "recommendation": payload_out,
-            "html": html,
-        }
-    )
 
 
 @api_bp.route("/metrics")

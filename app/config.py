@@ -86,34 +86,6 @@ CONFIDENCE_BANDS = [
     (0.00, "Low", "rose"),
 ]
 
-# Contextual rule engine vocabulary ----------------------------------------
-GROWTH_STAGES = [
-    {"key": "pre_planting", "label": "Pre-Planting / Land Preparation", "order": 0},
-    {"key": "seedling", "label": "Seedling (VE-V3)", "order": 1},
-    {"key": "vegetative", "label": "Vegetative (V4-V8)", "order": 2},
-    {"key": "whorl", "label": "Late Whorl (V9-VT)", "order": 3},
-    {"key": "tasseling", "label": "Tasseling / Silking (VT-R1)", "order": 4},
-    {"key": "reproductive", "label": "Grain Filling (R2-R4)", "order": 5},
-    {"key": "maturity", "label": "Maturity / Pre-Harvest (R5-R6)", "order": 6},
-]
-
-SEVERITY_LEVELS = [
-    {"key": "low", "label": "Low - isolated damage (<5% plants)", "weight": 1},
-    {"key": "moderate", "label": "Moderate - patchy spread (5-25% plants)", "weight": 2},
-    {"key": "high", "label": "High - widespread (25-50% plants)", "weight": 3},
-    {"key": "severe", "label": "Severe - field-wide (>50% plants)", "weight": 4},
-]
-
-WEATHER_CONDITIONS = [
-    {"key": "dry", "label": "Dry / Hot"},
-    {"key": "humid", "label": "Humid / Warm"},
-    {"key": "rainy", "label": "Rainy / Wet"},
-    {"key": "cool", "label": "Cool / Mild"},
-]
-
-# Days within which harvest is considered imminent for pre-harvest interval
-# (PHI) filtering of chemical products.
-PHI_WARNING_WINDOW_DAYS = 45
 
 # Flask ---------------------------------------------------------------------
 SECRET_KEY = os.getenv("SECRET_KEY", "corn-pest-research-dev-key-change-in-production")

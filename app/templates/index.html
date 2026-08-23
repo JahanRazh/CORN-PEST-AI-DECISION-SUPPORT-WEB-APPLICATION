@@ -68,16 +68,13 @@
 <!-- ==================== The detection form ==================== -->
 <section class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
   <form id="detectForm" action="{{ url_for('main.detect') }}" method="post" enctype="multipart/form-data"
-    class="grid gap-6 lg:grid-cols-12">
+    class="mx-auto max-w-3xl flex flex-col gap-6">
 
-    <!-- ---------- Step 1: the image ---------- -->
-    <div class="lg:col-span-7">
+    <!-- ---------- The image ---------- -->
+    <div>
       <div class="rounded-2xl border border-soil-200 bg-white p-6 shadow-sm">
-        <div class="flex items-center gap-3">
-          <span class="grid h-7 w-7 place-items-center rounded-full bg-leaf-600 text-xs font-bold text-white">1</span>
-          <h2 class="text-lg font-bold tracking-tight text-soil-900">Upload the pest image</h2>
-        </div>
-        <p class="mt-1.5 pl-10 text-sm text-soil-500">
+        <h2 class="text-lg font-bold tracking-tight text-soil-900">Upload the pest image</h2>
+        <p class="mt-1.5 text-sm text-soil-500">
           A close, well-lit photograph of the insect or the fresh damage. JPG, PNG, WEBP or BMP, up to 10 MB.
         </p>
 
@@ -132,6 +129,17 @@
             the OOD layer, not a failure of it.
           </p>
         </div>
+
+        <button type="submit" id="submitButton"
+          class="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-leaf-700 px-5 py-3.5 text-sm font-bold text-white shadow-sm shadow-leaf-900/20 transition-colors hover:bg-leaf-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-leaf-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-soil-300 disabled:shadow-none">
+          <svg id="submitIcon" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"
+            aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
+          </svg>
+          <span id="submitLabel">Analyse image</span>
+        </button>
+        <p class="mt-2 text-center text-xs text-soil-400">First analysis takes a few seconds while the model loads.</p>
       </div>
 
       <!-- Video Block -->
@@ -151,107 +159,6 @@
            </span>
            <h3 class="text-white font-bold text-sm drop-shadow-md">Corn pest damage analysis</h3>
         </div>
-      </div>
-    </div>
-
-    <!-- ---------- Step 2: field context ---------- -->
-    <div class="lg:col-span-5">
-      <div class="rounded-2xl border border-soil-200 bg-white p-6 shadow-sm">
-        <div class="flex items-center gap-3">
-          <span class="grid h-7 w-7 place-items-center rounded-full bg-leaf-600 text-xs font-bold text-white">2</span>
-          <h2 class="text-lg font-bold tracking-tight text-soil-900">Describe the field</h2>
-        </div>
-        <p class="mt-1.5 pl-10 text-sm text-soil-500">
-          The same pest needs different advice at seedling than at silking. These inputs drive the rule engine.
-        </p>
-
-        <div class="mt-5 space-y-5">
-          <div>
-            <label for="growth_stage" class="block text-sm font-semibold text-soil-800">Crop growth stage</label>
-            <select id="growth_stage" name="growth_stage"
-              class="mt-1.5 w-full rounded-lg border-soil-300 bg-white px-3 py-2.5 text-sm text-soil-800 shadow-sm focus:border-leaf-500 focus:ring-2 focus:ring-leaf-500/30">
-              {% for stage in GROWTH_STAGES %}
-              <option value="{{ stage.key }}" {% if stage.key=='vegetative' %}selected{% endif %}>{{ stage.label }}
-              </option>
-              {% endfor %}
-            </select>
-            <p class="mt-1 text-xs text-soil-400">Determines whether the pest's damage window is open and whether
-              pollinators are at risk.</p>
-          </div>
-
-          <fieldset>
-            <legend class="block text-sm font-semibold text-soil-800">Observed severity</legend>
-            <div class="mt-2 space-y-2">
-              {% for level in SEVERITY_LEVELS %}
-              <label
-                class="flex cursor-pointer items-center gap-3 rounded-lg border border-soil-200 px-3 py-2.5 text-sm transition-colors hover:bg-soil-50 has-[:checked]:border-leaf-400 has-[:checked]:bg-leaf-50">
-                <input type="radio" name="severity" value="{{ level.key }}" {% if level.key=='moderate' %}checked{%
-                  endif %} class="h-4 w-4 border-soil-300 text-leaf-600 focus:ring-leaf-500">
-                <span class="flex-1 text-soil-700">{{ level.label }}</span>
-                <span class="rounded px-1.5 py-0.5 text-[10px] font-bold
-                    {% if level.weight == 1 %}bg-leaf-100 text-leaf-700
-                    {% elif level.weight == 2 %}bg-corn-100 text-corn-800
-                    {% elif level.weight == 3 %}bg-orange-100 text-orange-700
-                    {% else %}bg-red-100 text-red-700{% endif %}">{{ level.weight }}/4</span>
-              </label>
-              {% endfor %}
-            </div>
-            <p class="mt-1 text-xs text-soil-400">Low severity returns a monitoring recommendation, not a spray.</p>
-          </fieldset>
-
-          <div>
-            <label for="weather" class="block text-sm font-semibold text-soil-800">Recent weather</label>
-            <select id="weather" name="weather"
-              class="mt-1.5 w-full rounded-lg border-soil-300 bg-white px-3 py-2.5 text-sm text-soil-800 shadow-sm focus:border-leaf-500 focus:ring-2 focus:ring-leaf-500/30">
-              {% for condition in WEATHER_CONDITIONS %}
-              <option value="{{ condition.key }}" {% if condition.key=='humid' %}selected{% endif %}>{{ condition.label
-                }}</option>
-              {% endfor %}
-            </select>
-            <p class="mt-1 text-xs text-soil-400">Fungal and nematode biocontrols need moisture; rain washes off Bt.</p>
-          </div>
-
-          <div>
-            <label for="days_to_harvest" class="block text-sm font-semibold text-soil-800">
-              Days until harvest <span class="font-normal text-soil-400">(optional)</span>
-            </label>
-            <input type="number" id="days_to_harvest" name="days_to_harvest" min="0" max="365" placeholder="e.g. 45"
-              class="mt-1.5 w-full rounded-lg border-soil-300 px-3 py-2.5 text-sm text-soil-800 shadow-sm focus:border-leaf-500 focus:ring-2 focus:ring-leaf-500/30">
-            <p class="mt-1 text-xs text-soil-400">Products whose pre-harvest interval exceeds this are marked not
-              permissible.</p>
-          </div>
-
-          <label
-            class="flex cursor-pointer items-start gap-3 rounded-lg border border-soil-200 bg-soil-50/60 px-3 py-3 hover:bg-soil-50 has-[:checked]:border-leaf-400 has-[:checked]:bg-leaf-50">
-            <input type="checkbox" name="beneficials" id="beneficials"
-              class="mt-0.5 h-4 w-4 rounded border-soil-300 text-leaf-600 focus:ring-leaf-500">
-            <span class="text-sm">
-              <span class="font-semibold text-soil-800">Beneficial insects are present</span>
-              <span class="mt-0.5 block text-xs text-soil-500">Ladybirds, lacewings, parasitic wasps or spiders in the
-                crop. Ranks selective chemistry above broad-spectrum products.</span>
-            </span>
-          </label>
-
-          <div>
-            <label for="field_note" class="block text-sm font-semibold text-soil-800">
-              Field note <span class="font-normal text-soil-400">(optional)</span>
-            </label>
-            <textarea id="field_note" name="field_note" rows="2" maxlength="500"
-              placeholder="Block reference, prior sprays, anything worth recording."
-              class="mt-1.5 w-full resize-none rounded-lg border-soil-300 px-3 py-2.5 text-sm text-soil-800 shadow-sm focus:border-leaf-500 focus:ring-2 focus:ring-leaf-500/30"></textarea>
-          </div>
-        </div>
-
-        <button type="submit" id="submitButton"
-          class="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-leaf-700 px-5 py-3.5 text-sm font-bold text-white shadow-sm shadow-leaf-900/20 transition-colors hover:bg-leaf-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-leaf-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-soil-300 disabled:shadow-none">
-          <svg id="submitIcon" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"
-            aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
-          </svg>
-          <span id="submitLabel">Analyse image</span>
-        </button>
-        <p class="mt-2 text-center text-xs text-soil-400">First analysis takes a few seconds while the model loads.</p>
       </div>
     </div>
   </form>

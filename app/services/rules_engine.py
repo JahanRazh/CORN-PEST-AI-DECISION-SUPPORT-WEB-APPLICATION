@@ -1,25 +1,15 @@
 """
 Rule-based recommendation engine.
 
-Takes a validated pest identity plus the field context supplied by the user
-(growth stage, observed severity, weather, days to harvest, beneficial-insect
-presence) and produces three coordinated recommendation tracks:
+Takes a validated pest identity and produces three coordinated recommendation tracks:
 
     chemical    ranked pesticide products with IRAC rotation guidance
-    biological  biocontrol agents suited to the current conditions
+    biological  biocontrol agents
     ipm         sequenced integrated pest management actions
 
 Every rule that fires records a human-readable trace entry, so the result page
 can explain *why* a recommendation was made rather than presenting an opaque
 list. That trace is the "decision reasoning" element of the explainable output.
-
-The rules encode standard IPM doctrine:
-  - treat only when the economic threshold is met (low severity -> monitor)
-  - prefer selective chemistry while beneficials are active
-  - respect the pre-harvest interval as harvest approaches
-  - rotate IRAC mode-of-action groups to manage resistance
-  - match application timing to the crop growth stage
-  - adjust for weather (rain-fastness, heat, humidity and biocontrol efficacy)
 """
 
 from __future__ import annotations
@@ -29,75 +19,8 @@ from typing import Any
 
 from app import config
 
-# Active ingredients considered selective / softer on beneficial insects.
-# Used when the user reports beneficial insects present in the field.
-SELECTIVE_INGREDIENTS = {
-    "chlorantraniliprole",
-    "cyclaniliprole",
-    "flubendiamide",
-    "methoxyfenozide",
-    "novaluron",
-    "indoxacarb",
-    "spinetoram",
-    "spinosad",
-    "emamectin benzoate",
-    "bacillus thuringiensis",
-}
-
-# Broad-spectrum groups that are hardest on pollinators and natural enemies.
-BROAD_SPECTRUM_MOA = {"1A", "1B", "3", "3A", "4A"}
-
-# Ingredients with documented pollinator risk; flagged during tasseling.
-POLLINATOR_RISK = {
-    "imidacloprid",
-    "thiamethoxam",
-    "clothianidin",
-    "acetamiprid",
-    "chlorpyrifos",
-    "dimethoate",
-    "malathion",
-    "carbaryl",
-}
-
 # Soil-dwelling pests: foliar rescue sprays do not reach them.
 SOIL_PESTS = {"White Grub", "Wireworm"}
-
-# Pests that bore into tissue, where timing before entry is critical.
-BORING_PESTS = {"Corn Borer", "Corn Earworm", "Stalk Borer"}
-
-# Weather-driven modifiers for biological control agents.
-BIOCONTROL_WEATHER = {
-    "beauveria bassiana": {
-        "favours": {"humid", "cool"},
-        "hinders": {"dry"},
-        "reason": "entomopathogenic fungi require high humidity to germinate on the cuticle",
-    },
-    "metarhizium anisopliae": {
-        "favours": {"humid", "cool"},
-        "hinders": {"dry"},
-        "reason": "fungal conidia need moisture and moderate temperatures to infect",
-    },
-    "bacillus thuringiensis": {
-        "favours": {"cool", "humid"},
-        "hinders": {"rainy"},
-        "reason": "Bt is degraded by UV and washed off by rain; apply late in the day",
-    },
-    "entomopathogenic nematodes": {
-        "favours": {"humid", "rainy", "cool"},
-        "hinders": {"dry"},
-        "reason": "nematodes need soil moisture to move toward their host",
-    },
-    "steinernema carpocapsae": {
-        "favours": {"humid", "rainy"},
-        "hinders": {"dry"},
-        "reason": "requires moist soil for movement and survival",
-    },
-    "trichogramma": {
-        "favours": {"humid", "cool"},
-        "hinders": {"rainy"},
-        "reason": "egg parasitoid releases fail in heavy rain and extreme heat",
-    },
-}
 
 
 @dataclass
@@ -138,136 +61,20 @@ class Recommendation:
         }
 
 
-def _severity_weight(severity: str) -> int:
-    for level in config.SEVERITY_LEVELS:
-        if level["key"] == severity:
-            return level["weight"]
-    return 2
-
-
-def _stage_order(stage: str) -> int:
-    for item in config.GROWTH_STAGES:
-        if item["key"] == stage:
-            return item["order"]
-    return 2
-
-
-def _label_for(collection: list[dict[str, Any]], key: str, default: str = "") -> str:
-    for item in collection:
-        if item["key"] == key:
-            return item["label"]
-    return default or key
-
-
-def _stage_alignment(pest_name: str, stage: str, timing_text: str) -> tuple[bool, str]:
-    """Judge whether the current growth stage matches the pest's damage window."""
-    order = _stage_order(stage)
-    timing = (timing_text or "").lower()
-
-    if pest_name in SOIL_PESTS:
-        if order <= 1:
-            return True, (
-                "Soil pests are managed before or at planting; the crop is still "
-                "within that window."
-            )
-        return False, (
-            "Soil-dwelling larvae feed below ground and the crop is past the "
-            "planting window, so no rescue treatment can reach them this season."
-        )
-
-    if "pre-planting" in timing and order <= 1:
-        return True, "The pest's control window is pre-planting or seedling stage."
-
-    if pest_name == "Corn Earworm":
-        if order >= 4:
-            return True, "Silking has begun, which is the critical earworm window."
-        return False, (
-            "Earworm damage occurs at silking; the crop has not reached that "
-            "stage yet, so scouting rather than spraying is appropriate."
-        )
-
-    if pest_name in BORING_PESTS and order >= 2:
-        return True, (
-            "The crop is in the vegetative to reproductive range where borer "
-            "larvae are still exposed before tunnelling."
-        )
-
-    if order <= 3:
-        return True, (
-            "Foliar-feeding larvae are exposed and reachable at the current "
-            "growth stage."
-        )
-
-    return True, "Treatment remains feasible at the current growth stage."
-
-
-def _score_chemical(
-    product: dict[str, Any],
-    *,
-    stage: str,
-    beneficials_present: bool,
-    days_to_harvest: int | None,
-    weather: str,
-) -> tuple[float, list[str], list[str]]:
+def _score_chemical(product: dict[str, Any]) -> tuple[float, list[str], list[str]]:
     """Rank one product; returns (score, advantages, cautions)."""
-    ingredient = product["active_ingredient"].lower()
-    moa = (product.get("moa_group") or "").upper().replace(" ", "")
     score = 50.0
     advantages: list[str] = []
     cautions: list[str] = []
-
-    is_selective = any(sel in ingredient for sel in SELECTIVE_INGREDIENTS)
-    if is_selective:
-        score += 20
-        advantages.append("Selective chemistry - lower impact on natural enemies")
-    if beneficials_present and not is_selective:
-        score -= 18
-        cautions.append(
-            "Broad-spectrum: you reported beneficial insects present in the field"
-        )
-    if any(group in moa for group in BROAD_SPECTRUM_MOA) and beneficials_present:
-        score -= 6
 
     if product.get("restricted_use"):
         score -= 8
         cautions.append("Restricted-use pesticide - a certified applicator is required")
 
-    # Pre-harvest interval handling.
     phi = product.get("phi_days")
-    if phi is not None and days_to_harvest is not None:
-        if phi > days_to_harvest:
-            score -= 60
-            cautions.append(
-                f"Pre-harvest interval of {phi} days exceeds the {days_to_harvest} "
-                "days remaining before harvest - not permissible"
-            )
-        elif phi > days_to_harvest - 7:
-            score -= 12
-            cautions.append(
-                f"Pre-harvest interval of {phi} days leaves little margin before "
-                f"harvest in {days_to_harvest} days"
-            )
-        else:
-            score += 6
-            advantages.append(f"Pre-harvest interval of {phi} days fits the schedule")
-    elif phi is not None and phi <= 7:
+    if phi is not None and phi <= 7:
         score += 4
         advantages.append(f"Short pre-harvest interval ({phi} days)")
-
-    # Pollinator protection during pollen shed.
-    if _stage_order(stage) == 4 and any(risk in ingredient for risk in POLLINATOR_RISK):
-        score -= 15
-        cautions.append(
-            "Elevated pollinator risk during tasseling and silking - avoid "
-            "application while pollen is shedding"
-        )
-
-    # Weather effects on the application itself.
-    if weather == "rainy":
-        score -= 5
-        cautions.append("Rain may wash off the application - check the rain-fast period")
-    if weather == "dry" and "spinosad" in ingredient:
-        cautions.append("Ensure thorough coverage; residues degrade quickly in strong sun")
 
     if product.get("trade_name"):
         advantages.append(f"Available as {product['trade_name']}")
@@ -275,14 +82,7 @@ def _score_chemical(
     return score, advantages, cautions
 
 
-def _build_chemical_options(
-    mapping_result,
-    *,
-    stage: str,
-    beneficials_present: bool,
-    days_to_harvest: int | None,
-    weather: str,
-) -> list[dict[str, Any]]:
+def _build_chemical_options(mapping_result) -> list[dict[str, Any]]:
     """Rank product-level records; fall back to the curated ingredient list."""
     options: list[dict[str, Any]] = []
     if mapping_result.pest_profile:
@@ -297,13 +97,7 @@ def _build_chemical_options(
                 "restricted_use": False,
                 "product_type": "Curated recommendation",
             }
-            score, advantages, cautions = _score_chemical(
-                pseudo,
-                stage=stage,
-                beneficials_present=beneficials_present,
-                days_to_harvest=days_to_harvest,
-                weather=weather,
-            )
+            score, advantages, cautions = _score_chemical(pseudo)
             options.append(
                 {
                     **pseudo,
@@ -319,60 +113,26 @@ def _build_chemical_options(
     return options
 
 
-def _build_biological_options(
-    profile: dict[str, Any] | None, weather: str, stage: str
-) -> list[dict[str, Any]]:
+def _build_biological_options(profile: dict[str, Any] | None) -> list[dict[str, Any]]:
     if not profile:
         return []
 
     options: list[dict[str, Any]] = []
     for agent in profile.get("biological_controls", []):
-        lowered = agent.lower()
-        suitability = "suitable"
-        note = "Compatible with the reported field conditions."
-
-        for keyword, rule in BIOCONTROL_WEATHER.items():
-            if keyword in lowered:
-                if weather in rule["hinders"]:
-                    suitability = "limited"
-                    note = (
-                        f"Reduced efficacy in {weather} conditions - {rule['reason']}."
-                    )
-                elif weather in rule["favours"]:
-                    suitability = "favoured"
-                    note = f"Conditions favour this agent - {rule['reason']}."
-                break
-
-        # Nematodes and soil fungi need to go on before or at planting.
-        if "nematode" in lowered and _stage_order(stage) > 2:
-            suitability = "limited"
-            note = (
-                "Soil applications are most effective before planting or during "
-                "early root development."
-            )
-
         options.append(
             {
                 "agent": agent,
-                "suitability": suitability,
-                "note": note,
+                "suitability": "suitable",
+                "note": "A potential biological control for this pest.",
                 "source": "Curated pest profile (Sheet1)",
             }
         )
-
-    order = {"favoured": 0, "suitable": 1, "limited": 2}
-    options.sort(key=lambda o: order.get(o["suitability"], 3))
     return options
 
 
 def generate(
     mapping_result,
     *,
-    growth_stage: str = "vegetative",
-    severity: str = "moderate",
-    weather: str = "humid",
-    days_to_harvest: int | None = None,
-    beneficials_present: bool = False,
     confidence: float = 1.0,
 ) -> Recommendation:
     """Apply the rule set and return a fully explained recommendation."""
@@ -380,11 +140,6 @@ def generate(
     pest_name = mapping_result.display_name
     reasoning: list[dict[str, str]] = []
     sources: list[str] = []
-
-    weight = _severity_weight(severity)
-    stage_label = _label_for(config.GROWTH_STAGES, growth_stage)
-    severity_label = _label_for(config.SEVERITY_LEVELS, severity)
-    weather_label = _label_for(config.WEATHER_CONDITIONS, weather)
 
     reasoning.append(
         {
@@ -401,72 +156,23 @@ def generate(
     if profile:
         sources.append("Curated pest profile (Excel Sheet1)")
 
-    # --- Rule 1: growth stage alignment -----------------------------------
-    stage_ok, stage_reason = _stage_alignment(
-        pest_name, growth_stage, profile.get("application_timing", "") if profile else ""
-    )
-    reasoning.append(
-        {
-            "rule": "Growth stage alignment",
-            "detail": f"Crop stage reported as {stage_label}. {stage_reason}",
-        }
-    )
-
-    # --- Rule 2: severity vs economic threshold ---------------------------
-    if weight <= 1:
-        action_level = "monitor"
-        urgency = 20
-        headline = "Monitor - below the economic threshold"
-        detail = (
-            "Infestation is currently isolated. IPM doctrine is to scout rather "
-            "than spray at this level: treating below the economic threshold "
-            "adds cost, removes natural enemies and accelerates resistance."
-        )
-    elif weight == 2:
-        action_level = "treat_soon"
-        urgency = 50
-        headline = "Prepare to treat - approaching threshold"
-        detail = (
-            "Damage is spreading. Confirm against the economic threshold below, "
-            "and have the chosen product ready so treatment can go on at the "
-            "correct larval stage."
-        )
-    elif weight == 3:
-        action_level = "treat_now"
-        urgency = 75
-        headline = "Treat now - threshold exceeded"
-        detail = (
-            "Infestation is widespread enough to justify intervention. Apply at "
-            "the timing indicated below for maximum efficacy."
-        )
-    else:
-        action_level = "treat_now"
-        urgency = 92
-        headline = "Urgent - severe infestation"
-        detail = (
-            "Field-wide damage warrants immediate intervention combined with "
-            "follow-up scouting to confirm control and detect re-infestation."
-        )
-
-    reasoning.append(
-        {
-            "rule": "Severity vs economic threshold",
-            "detail": (
-                f"Severity reported as '{severity_label}' (weight {weight}/4), "
-                f"which maps to the '{headline.split(' - ')[0].lower()}' action level."
-            ),
-        }
+    action_level = "treat_now"
+    urgency = 75
+    headline = "Treat now - threshold exceeded"
+    detail = (
+        "Based on the detection, verify against the economic threshold and "
+        "apply at the timing indicated below for maximum efficacy."
     )
 
     # Soil pests past the planting window override the action level: no rescue
     # treatment exists, so telling the user to spray would be wrong.
-    if pest_name in SOIL_PESTS and not stage_ok:
+    if pest_name in SOIL_PESTS:
         action_level = "preventive"
         urgency = min(urgency, 45)
         headline = "No rescue treatment - plan preventively"
         detail = (
             "Larvae of this pest feed on roots below ground and cannot be "
-            "reached by a foliar spray at this stage. Record the affected areas "
+            "reached by a foliar spray. Record the affected areas "
             "and plan seed treatment or soil-applied control for the next "
             "planting; treat now only if replanting into infested ground."
         )
@@ -481,7 +187,7 @@ def generate(
             }
         )
 
-    # --- Rule 3: low AI confidence tempers the advice ---------------------
+    # --- Rule: low AI confidence tempers the advice ---------------------
     if confidence < 0.75:
         urgency = max(urgency - 10, 10)
         reasoning.append(
@@ -495,53 +201,10 @@ def generate(
             }
         )
 
-    # --- Rule 4: pre-harvest interval -------------------------------------
-    if days_to_harvest is not None:
-        reasoning.append(
-            {
-                "rule": "Pre-harvest interval filter",
-                "detail": (
-                    f"Harvest is {days_to_harvest} days away. Products whose "
-                    "pre-harvest interval exceeds that window are marked as not "
-                    "permissible and pushed to the bottom of the ranking."
-                ),
-            }
-        )
+    chemical_options = _build_chemical_options(mapping_result)
+    biological_options = _build_biological_options(profile)
 
-    # --- Rule 5: beneficial insect protection -----------------------------
-    if beneficials_present:
-        reasoning.append(
-            {
-                "rule": "Natural enemy conservation",
-                "detail": (
-                    "Beneficial insects were reported present, so selective "
-                    "chemistry (IRAC groups 5, 18, 22A, 28) is ranked above "
-                    "broad-spectrum pyrethroids, carbamates and neonicotinoids."
-                ),
-            }
-        )
-
-    # --- Rule 6: weather ---------------------------------------------------
-    reasoning.append(
-        {
-            "rule": "Environmental conditions",
-            "detail": (
-                f"Weather reported as {weather_label}, which adjusts biological "
-                "control suitability and application advice."
-            ),
-        }
-    )
-
-    chemical_options = _build_chemical_options(
-        mapping_result,
-        stage=growth_stage,
-        beneficials_present=beneficials_present,
-        days_to_harvest=days_to_harvest,
-        weather=weather,
-    )
-    biological_options = _build_biological_options(profile, weather, growth_stage)
-
-    # --- Rule 7: IRAC rotation --------------------------------------------
+    # --- Rule: IRAC rotation --------------------------------------------
     distinct_moa = []
     for option in chemical_options:
         group = (option.get("moa_group") or "").strip()
@@ -564,9 +227,6 @@ def generate(
         profile,
         action_level=action_level,
         pest_name=pest_name,
-        stage_ok=stage_ok,
-        severity_weight=weight,
-        beneficials_present=beneficials_present,
         biological_options=biological_options,
         distinct_moa=distinct_moa,
     )
@@ -574,21 +234,6 @@ def generate(
     environmental_notes: list[str] = []
     if profile and profile.get("environmental_consideration"):
         environmental_notes.append(profile["environmental_consideration"])
-    if _stage_order(growth_stage) == 4:
-        environmental_notes.append(
-            "Crop is pollinating: avoid applications during pollen shed and "
-            "spray in the early morning or late evening when bees are inactive."
-        )
-    if weather == "rainy":
-        environmental_notes.append(
-            "Wet conditions raise the risk of runoff into waterways; observe "
-            "buffer zones and delay application if heavy rain is forecast."
-        )
-    if weather == "dry":
-        environmental_notes.append(
-            "Under hot, dry conditions plants are already stressed and spray "
-            "drift travels further; apply in cooler hours with reduced pressure."
-        )
 
     return Recommendation(
         pest_display_name=pest_name,
@@ -603,16 +248,7 @@ def generate(
         reasoning=reasoning,
         threshold_guidance=profile.get("treatment_guideline", "") if profile else "",
         timing_guidance=profile.get("application_timing", "") if profile else "",
-        context={
-            "growth_stage": growth_stage,
-            "growth_stage_label": stage_label,
-            "severity": severity,
-            "severity_label": severity_label,
-            "weather": weather,
-            "weather_label": weather_label,
-            "days_to_harvest": days_to_harvest,
-            "beneficials_present": beneficials_present,
-        },
+        context={},
         sources=sources or ["Curated pest profile (Excel Sheet1)"],
     )
 
@@ -622,9 +258,6 @@ def _build_ipm_actions(
     *,
     action_level: str,
     pest_name: str,
-    stage_ok: bool,
-    severity_weight: int,
-    beneficials_present: bool,
     biological_options: list[dict[str, Any]],
     distinct_moa: list[str],
 ) -> list[dict[str, Any]]:
@@ -692,22 +325,11 @@ def _build_ipm_actions(
             }
         )
 
-    if action_level == "monitor":
-        chemical_detail = (
-            "Hold off on chemical treatment. The infestation is below the "
-            "economic threshold, and spraying now would cost more than the "
-            "damage prevented while removing natural enemies."
-        )
-    elif action_level == "preventive":
+    if action_level == "preventive":
         chemical_detail = (
             "No effective rescue chemistry exists at this stage. Plan a seed "
             "treatment or soil-applied insecticide for the next planting in "
             "the affected areas."
-        )
-    elif not stage_ok:
-        chemical_detail = (
-            "The crop is outside this pest's main damage window, so delay "
-            "chemical treatment and continue scouting rather than spraying now."
         )
     else:
         chemical_detail = (
@@ -762,18 +384,5 @@ def _build_ipm_actions(
             ),
         }
     )
-
-    if beneficials_present:
-        actions.append(
-            {
-                "step": len(actions) + 1,
-                "category": "Conservation",
-                "title": "Protect the natural enemies present",
-                "detail": (
-                    "Leave untreated refuge strips where practical so predators "
-                    "and parasitoids can recolonise the treated area."
-                ),
-            }
-        )
 
     return actions

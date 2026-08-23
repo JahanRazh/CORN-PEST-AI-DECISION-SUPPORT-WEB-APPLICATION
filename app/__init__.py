@@ -91,9 +91,6 @@ def _register_template_helpers(app: Flask) -> None:
     @app.context_processor
     def inject_globals():  # type: ignore[no-untyped-def]
         return {
-            "GROWTH_STAGES": config.GROWTH_STAGES,
-            "SEVERITY_LEVELS": config.SEVERITY_LEVELS,
-            "WEATHER_CONDITIONS": config.WEATHER_CONDITIONS,
             "APP_NAME": "CornGuard AI",
             "APP_TAGLINE": "Corn Pest Decision Support System",
         }

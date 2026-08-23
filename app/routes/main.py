@@ -57,24 +57,10 @@ def detect():
 
     raw = upload.read()
 
-    days_to_harvest = request.form.get("days_to_harvest", "").strip()
-    try:
-        days_value = int(days_to_harvest) if days_to_harvest else None
-        if days_value is not None and not 0 <= days_value <= 365:
-            days_value = None
-    except ValueError:
-        days_value = None
-
     try:
         record = detection_pipeline.run(
             raw,
             upload.filename,
-            growth_stage=request.form.get("growth_stage", "vegetative"),
-            severity=request.form.get("severity", "moderate"),
-            weather=request.form.get("weather", "humid"),
-            days_to_harvest=days_value,
-            beneficials_present=request.form.get("beneficials") == "on",
-            field_note=request.form.get("field_note", ""),
         )
     except detection_pipeline.DetectionError as exc:
         flash(str(exc), "error")

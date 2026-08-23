@@ -60,12 +60,6 @@ def run(
     raw: bytes,
     filename: str,
     *,
-    growth_stage: str = "vegetative",
-    severity: str = "moderate",
-    weather: str = "humid",
-    days_to_harvest: int | None = None,
-    beneficials_present: bool = False,
-    field_note: str = "",
     persist: bool = True,
 ) -> dict[str, Any]:
     """Execute the full decision-support pipeline for one image."""
@@ -138,14 +132,6 @@ def run(
             "ranked": prediction.ranked(),
         },
         "ood": ood.to_dict(),
-        "context": {
-            "growth_stage": growth_stage,
-            "severity": severity,
-            "weather": weather,
-            "days_to_harvest": days_to_harvest,
-            "beneficials_present": beneficials_present,
-            "field_note": field_note[:500],
-        },
         "image": {"uploaded": False},
     }
 
@@ -193,11 +179,6 @@ def run(
 
         recommendation = rules_engine.generate(
             mapping,
-            growth_stage=growth_stage,
-            severity=severity,
-            weather=weather,
-            days_to_harvest=days_to_harvest,
-            beneficials_present=beneficials_present,
             confidence=prediction.confidence,
         )
         trace.append(
