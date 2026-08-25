@@ -25,9 +25,8 @@ Stage 2 - Distributional scoring
     Margin     A small top1-top2 gap means the model cannot separate two
                visually similar pests, which is itself a reason to abstain.
 
-    An optional fifth score (Mahalanobis-style distance to the nearest class
-    centroid in feature space) activates once scripts/calibrate_ood.py has
-    been run against the training set.
+An optional fifth score (Mahalanobis-style distance to the nearest class
+    centroid in feature space) was considered but not implemented.
 
 Voting rather than a single threshold is deliberate: any one score can be
 fooled by an adversarial or unusual image, but agreement across independent
@@ -84,7 +83,6 @@ class OODResult:
     signals: list[dict[str, Any]] = field(default_factory=list)
     scores: dict[str, float] = field(default_factory=dict)
     relevance: dict[str, Any] = field(default_factory=dict)
-    calibrated: bool = False
 
     @property
     def confidence_in_verdict(self) -> float:
@@ -103,45 +101,8 @@ class OODResult:
             "signals": self.signals,
             "scores": self.scores,
             "relevance": self.relevance,
-            "calibrated": self.calibrated,
             "verdict_agreement": self.confidence_in_verdict,
         }
-
-
-# --------------------------------------------------------------------------
-# Calibration statistics (optional, produced by scripts/calibrate_ood.py)
-# --------------------------------------------------------------------------
-def load_stats() -> dict[str, Any]:
-    """Load calibrated thresholds if present, else fall back to defaults."""
-    global _stats_cache
-    if _stats_cache is not None:
-        return _stats_cache
-
-    stats: dict[str, Any] = dict(config.OOD_DEFAULTS)
-    stats["calibrated"] = False
-    stats["centroids"] = None
-
-    if config.OOD_STATS_PATH.exists():
-        try:
-            archive = np.load(config.OOD_STATS_PATH, allow_pickle=True)
-            for key in (
-                "msp_threshold",
-                "entropy_threshold",
-                "energy_threshold",
-                "margin_threshold",
-                "feature_distance_threshold",
-            ):
-                if key in archive:
-                    stats[key] = float(archive[key])
-            if "centroids" in archive:
-                stats["centroids"] = np.asarray(archive["centroids"], dtype="float64")
-            stats["calibrated"] = True
-            logger.info("Loaded calibrated OOD statistics from %s", config.OOD_STATS_PATH)
-        except Exception:
-            logger.exception("Could not read OOD stats; using defaults")
-
-    _stats_cache = stats
-    return stats
 
 
 # --------------------------------------------------------------------------
@@ -246,7 +207,7 @@ def cosine_distance_to_nearest_centroid(
 
 def evaluate(prediction, image: Image.Image | None = None, precomputed_relevance: dict[str, Any] | None = None) -> OODResult:
     """Decide whether a prediction should be accepted or rejected as Unknown."""
-    stats = load_stats()
+    stats: dict[str, Any] = dict(config.OOD_DEFAULTS)
     probabilities = prediction.probabilities
     logits = prediction.logits
 
@@ -254,9 +215,6 @@ def evaluate(prediction, image: Image.Image | None = None, precomputed_relevance
     entropy = normalised_entropy(probabilities)
     energy = free_energy(logits)
     margin = prediction.margin
-    distance = cosine_distance_to_nearest_centroid(
-        prediction.features, stats.get("centroids")
-    )
 
     signals: list[dict[str, Any]] = [
         {
@@ -304,21 +262,6 @@ def evaluate(prediction, image: Image.Image | None = None, precomputed_relevance
             "reference": "Decision-boundary proximity",
         },
     ]
-
-    if distance is not None:
-        signals.append(
-            {
-                "name": "Feature-Space Distance",
-                "abbreviation": "D",
-                "value": round(distance, 4),
-                "threshold": round(float(stats["feature_distance_threshold"]), 4),
-                "rule": "flag when above threshold",
-                "flagged": distance > stats["feature_distance_threshold"],
-                "description": "Cosine distance to the nearest class centroid "
-                               "learned from the training set.",
-                "reference": "Lee et al., NeurIPS 2018 (Mahalanobis)",
-            }
-        )
 
     votes = sum(1 for s in signals if s["flagged"])
     votes_required = int(stats["votes_required"])
@@ -376,8 +319,6 @@ def evaluate(prediction, image: Image.Image | None = None, precomputed_relevance
             "entropy": round(entropy, 4),
             "energy": round(energy, 4),
             "margin": round(margin, 4),
-            "feature_distance": round(distance, 4) if distance is not None else None,
         },
         relevance=relevance,
-        calibrated=bool(stats["calibrated"]),
     )

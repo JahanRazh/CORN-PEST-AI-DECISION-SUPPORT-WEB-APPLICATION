@@ -39,7 +39,8 @@ def _banner(host: str, port: int) -> None:
     print(f"  Knowledge base  : {mark(status['knowledge_base'])}")
     print(f"  Image storage   : {mark(status['cloudinary'])}")
     print(f"  Record storage  : {mark(status['firestore'])}")
-    print(f"  OOD thresholds  : {'calibrated' if status['ood']['calibrated'] else 'literature defaults'}")
+    print(f"  OOD thresholds  : literature defaults (MSP, Entropy, Energy, Margin)")
+
     print("-" * 68)
     print(f"  Open  http://{'127.0.0.1' if host == '0.0.0.0' else host}:{port}")
     print("=" * 68)

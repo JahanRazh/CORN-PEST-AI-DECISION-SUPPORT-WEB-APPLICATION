@@ -200,8 +200,7 @@ def run(
     trace.append(
         {
             "stage": "Unknown image rejection",
-            "component": "OOD detection layer "
-                         f"({'calibrated' if ood.calibrated else 'default thresholds'})",
+            "component": "OOD detection layer (default thresholds)",
             "outcome": f"{ood.status.title()} - {ood.votes} of "
                        f"{len(ood.signals)} signals flagged",
         }
@@ -351,7 +350,6 @@ def system_status() -> dict[str, Any]:
         },
         "ood": {
             "ready": True,
-            "calibrated": ood_service.load_stats()["calibrated"],
             "relevance_gate": config.RELEVANCE_GATE_ENABLED,
         },
         **cloud,

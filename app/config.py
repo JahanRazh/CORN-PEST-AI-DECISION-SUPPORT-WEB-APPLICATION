@@ -24,7 +24,6 @@ RESULT_DIR = MODEL_DIR / "result"
 
 MODEL_PATH = MODEL_DIR / "best_corn_pest_model.keras"
 CLASS_NAMES_PATH = MODEL_DIR / "class_names.json"
-OOD_STATS_PATH = MODEL_DIR / "ood_stats.npz"
 METRICS_PATH = MODEL_DIR / "model_metrics.json"
 KNOWLEDGE_BASE_PATH = DATA_DIR / "Corn_Pest_Rule_Based_Pesticide_Recommendation_System.xlsx"
 
@@ -48,9 +47,6 @@ MAX_CONTENT_LENGTH = 10 * 1024 * 1024  # 10 MB
 #                Misclassified and Out-of-Distribution Examples"
 #   - Energy     Liu et al. (2020), "Energy-based Out-of-distribution Detection"
 #   - Entropy    Predictive-uncertainty baseline over the softmax distribution
-#
-# Run scripts/calibrate_ood.py against the training set to replace these with
-# percentile-calibrated values written to model/ood_stats.npz.
 # ---------------------------------------------------------------------------
 OOD_DEFAULTS = {
     # Maximum softmax probability. Below this the prediction is not trusted.
@@ -63,8 +59,6 @@ OOD_DEFAULTS = {
     # Gap between the top-1 and top-2 probabilities. A small margin means the
     # model is torn between two classes.
     "margin_threshold": 0.15,
-    # Cosine distance to the nearest class feature centroid (calibrated only).
-    "feature_distance_threshold": 0.75,
     # Number of individual OOD signals that must fire before the image is
     # rejected as Unknown.
     "votes_required": 1,

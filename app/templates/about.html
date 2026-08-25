@@ -74,10 +74,7 @@
          'Liu et al., NeurIPS 2020'),
         ('MAR', 'Top-2 margin',
          'Reject when the gap between the first and second class is below ' ~ ood_config.margin_threshold ~ '. Targets the confusable pairs visible in the confusion matrix.',
-         'Margin-based abstention'),
-        ('MAH', 'Feature-space distance',
-         'Reject when the distance to the nearest class centroid exceeds ' ~ ood_config.feature_distance_threshold ~ '. Available only after calibration, since it needs class centroids from the training set.',
-         'Lee et al., NeurIPS 2018')
+         'Margin-based abstention')
       ] %}
       {% for abbr, name, detail, citation in signals %}
         <div class="rounded-2xl border border-soil-200 bg-white p-5">
@@ -102,21 +99,6 @@
       </div>
     </div>
 
-    <div class="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-5">
-      <h3 class="text-sm font-bold text-amber-900">Calibration status</h3>
-      <p class="mt-1.5 text-[13px] leading-relaxed text-amber-900/85">
-        {% if status.ood.calibrated %}
-          Thresholds are calibrated: percentile statistics computed from the training distribution
-          have been written to <span class="font-mono">model/ood_stats.npz</span> and are in use,
-          including the feature-distance signal.
-        {% else %}
-          Thresholds are currently the literature-derived defaults listed above. Running
-          <span class="rounded bg-white px-1.5 py-0.5 font-mono text-xs">python scripts/calibrate_ood.py --data &lt;training_dir&gt;</span>
-          replaces them with percentiles measured on the actual training distribution and enables
-          the feature-distance signal, which needs class centroids to exist.
-        {% endif %}
-      </p>
-    </div>
   </section>
 
 
@@ -190,8 +172,7 @@
     <h2 class="text-lg font-bold tracking-tight text-soil-900">Limitations, stated plainly</h2>
     <ul class="mt-3 space-y-2.5">
       {% for limitation in [
-        'The classifier recognises ' ~ class_names|length ~ ' pests. Corn is attacked by many more, and a pest outside this set will either be rejected or, in the worst case, resemble one that is inside it.',
-        'Until the OOD thresholds are calibrated on the training distribution, rejection uses literature defaults and the feature-distance signal is inactive.'
+        'The classifier recognises ' ~ class_names|length ~ ' pests. Corn is attacked by many more, and a pest outside this set will either be rejected or, in the worst case, resemble one that is inside it.'
       ] %}
         <li class="flex items-start gap-2.5 text-[13px] leading-relaxed text-soil-700">
           <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-soil-400" aria-hidden="true"></span>

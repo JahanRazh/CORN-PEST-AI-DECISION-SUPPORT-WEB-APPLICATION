@@ -144,7 +144,7 @@
           <ul class="mt-3 space-y-2.5">
             {% set components = [
               ('Classification model', status.model.ready, status.model.error, status.model.classes ~ ' classes loaded'),
-              ('OOD rejection layer', status.ood.ready, none, 'Calibrated' if status.ood.calibrated else 'Default thresholds + relevance gate'),
+              ('OOD rejection layer', status.ood.ready, none, 'Default thresholds + relevance gate'),
               ('Excel knowledge base', status.knowledge_base.ready, status.knowledge_base.error, (status.knowledge_base.pest_count|default(0)) ~ ' pests'),
               ('Cloudinary image store', status.cloudinary.ready, status.cloudinary.error, 'Folder ' ~ status.cloudinary.folder),
               ('Firestore records', status.firestore.ready, status.firestore.error, 'Collection ' ~ status.firestore.collection)
@@ -418,7 +418,7 @@
       <ul class="mt-4 space-y-3">
         {% set components = [
           ('Model', status.model.ready, status.model.error, status.model.classes ~ ' classes'),
-          ('OOD layer', status.ood.ready, none, 'Calibrated' if status.ood.calibrated else 'Default thresholds'),
+          ('OOD layer', status.ood.ready, none, 'Default thresholds'),
           ('Relevance gate', status.ood.relevance_gate, none, 'ImageNet MobileNetV2'),
           ('Knowledge base', status.knowledge_base.ready, status.knowledge_base.error, (status.knowledge_base.pest_count|default(0)) ~ ' pests'),
           ('Cloudinary', status.cloudinary.ready, status.cloudinary.error, status.cloudinary.folder),
