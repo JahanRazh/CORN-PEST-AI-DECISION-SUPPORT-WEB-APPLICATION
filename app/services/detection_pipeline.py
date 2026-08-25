@@ -76,14 +76,108 @@ def run(
             "saved in an unsupported format."
         ) from exc
 
+    extension = (filename.rsplit(".", 1)[-1] if "." in filename else "unknown").upper()
     trace.append(
         {
             "stage": "Image validation",
-            "component": "Upload handler",
-            "outcome": f"Accepted {image.width}x{image.height} image "
+            "component": "Format & Size Validator",
+            "outcome": f"Accepted {image.width}x{image.height} {extension} image "
                        f"({len(raw) / 1024:.0f} KB)",
         }
     )
+
+    # --- Stage 1.5: Relevance gate (ImageNet first-pass) ------------------
+    relevance = ood_service.relevance_score(image)
+    if relevance.get("available") and relevance.get("score") is not None:
+        if not relevance.get("passed"):
+            trace.append(
+                {
+                    "stage": "ImageNet Validation Gate",
+                    "component": "MobileNetV2 (ImageNet)",
+                    "outcome": f"Rejected - Not an insect or crop plant (score: {relevance['score']:.4f})",
+                }
+            )
+            
+            trace.append({
+                "stage": "Pest classification",
+                "component": "EfficientNetB0 (transfer learning + fine tuning)",
+                "outcome": "Skipped - image failed ImageNet relevance check"
+            })
+            
+            trace.append({
+                "stage": "Unknown image rejection",
+                "component": "OOD detection layer",
+                "outcome": "Skipped - image already rejected by ImageNet gate"
+            })
+            
+            trace.append({
+                "stage": "Expert validation",
+                "component": "Expert mapping layer",
+                "outcome": "Skipped - no pest identity is asserted for a rejected image"
+            })
+            
+            # Fast-fail rejection
+            ood_result = ood_service.OODResult(
+                is_ood=True,
+                status="rejected",
+                reason="The image was rejected by the ImageNet relevance gate because it does not appear to contain an insect or crop plant. Pest identification was bypassed.",
+                votes=0,
+                votes_required=int(config.OOD_DEFAULTS.get("votes_required", 2)),
+                relevance=relevance,
+                calibrated=False,
+            )
+            
+            record: dict[str, Any] = {
+                "detection_id": detection_id,
+                "timestamp": timestamp.isoformat(),
+                "filename": filename,
+                "prediction": None,
+                "ood": ood_result.to_dict(),
+                "image": {"uploaded": False},
+                "status": "rejected",
+                "pest": None,
+                "rejection": {
+                    "title": "Unknown or unrelated image",
+                    "message": ood_result.reason,
+                    "guidance": _rejection_guidance(ood_result),
+                }
+            }
+            record["trace"] = trace
+            
+            # Persist and return early
+            if persist:
+                upload = cloud_store.upload_image(raw, filename)
+                record["image"] = upload
+                trace.append({
+                    "stage": "Image storage", "component": "Cloudinary", 
+                    "outcome": "Stored" if upload.get("uploaded") else f"Not stored - {upload.get('error', 'unknown error')}"
+                })
+                saved = cloud_store.save_detection(record)
+                record["persistence"] = saved
+                trace.append({
+                    "stage": "Record storage", "component": f"Firestore ({config.FIRESTORE_COLLECTION})", 
+                    "outcome": "Saved" if saved.get("saved") else f"Not saved - {saved.get('error', 'unknown error')}"
+                })
+            else:
+                record["persistence"] = {"saved": False, "error": "Persistence disabled"}
+
+            return record
+        else:
+            trace.append(
+                {
+                    "stage": "ImageNet Validation Gate",
+                    "component": "MobileNetV2 (ImageNet)",
+                    "outcome": f"Passed - Plausible insect/plant content (score: {relevance['score']:.4f})",
+                }
+            )
+    else:
+        trace.append(
+            {
+                "stage": "ImageNet Validation Gate",
+                "component": "MobileNetV2 (ImageNet)",
+                "outcome": f"Skipped - Model unavailable ({relevance.get('error', 'Disabled')})",
+            }
+        )
 
     # --- Stage 2: classify ------------------------------------------------
     if not model_service.is_ready():
@@ -102,7 +196,7 @@ def run(
     )
 
     # --- Stage 3: unknown / OOD rejection ---------------------------------
-    ood = ood_service.evaluate(prediction, image=image)
+    ood = ood_service.evaluate(prediction, image=image, precomputed_relevance=relevance)
     trace.append(
         {
             "stage": "Unknown image rejection",

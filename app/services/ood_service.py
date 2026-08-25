@@ -244,7 +244,7 @@ def cosine_distance_to_nearest_centroid(
     return float(1.0 - np.max(similarities))
 
 
-def evaluate(prediction, image: Image.Image | None = None) -> OODResult:
+def evaluate(prediction, image: Image.Image | None = None, precomputed_relevance: dict[str, Any] | None = None) -> OODResult:
     """Decide whether a prediction should be accepted or rejected as Unknown."""
     stats = load_stats()
     probabilities = prediction.probabilities
@@ -324,7 +324,7 @@ def evaluate(prediction, image: Image.Image | None = None) -> OODResult:
     votes_required = int(stats["votes_required"])
 
     # Relevance gate can veto outright, before the vote is even considered.
-    relevance = relevance_score(image) if image is not None else {"available": False}
+    relevance = precomputed_relevance if precomputed_relevance is not None else (relevance_score(image) if image is not None else {"available": False})
     gate_hard_reject = (
         relevance.get("available")
         and relevance.get("score") is not None

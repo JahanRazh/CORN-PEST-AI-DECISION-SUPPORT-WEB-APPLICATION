@@ -15,8 +15,8 @@
           <svg class="h-5 w-5 text-soil-400 transition-colors group-hover:text-leaf-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
         </a>
         <div>
-          <h1 class="text-2xl font-extrabold tracking-tight text-soil-900">Detection Result</h1>
-          <div class="mt-1 flex items-center gap-2 text-xs text-soil-500 font-mono">
+          <h1 class="text-3xl font-extrabold tracking-tight text-soil-900">Detection Result</h1>
+          <div class="mt-1 flex items-center gap-2 text-sm text-soil-500 font-mono">
             <span>{{ record.detection_id }}</span>
             <span class="h-1 w-1 rounded-full bg-soil-300"></span>
             <span>{{ record.timestamp[:19]|replace('T', ' ') }} UTC</span>
@@ -25,11 +25,11 @@
       </div>
 
       <div class="no-print flex items-center gap-3">
-        <button type="button" onclick="window.print()" class="flex items-center gap-2 rounded-xl bg-white border border-soil-200 px-4 py-2.5 text-sm font-semibold text-soil-700 shadow-sm transition-all hover:bg-soil-50 hover:border-soil-300">
+        <button type="button" onclick="window.print()" class="flex items-center gap-2 rounded-xl bg-white border border-soil-200 px-4 py-2.5 text-base font-semibold text-soil-700 shadow-sm transition-all hover:bg-soil-50 hover:border-soil-300">
           <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
           Print Report
         </button>
-        <a href="{{ url_for('main.index') }}" class="flex items-center gap-2 rounded-xl bg-leaf-700 px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-leaf-900/20 transition-all hover:bg-leaf-800 hover:shadow-lg hover:-translate-y-0.5">
+        <a href="{{ url_for('main.index') }}" class="flex items-center gap-2 rounded-xl bg-leaf-700 px-4 py-2.5 text-base font-bold text-white shadow-md shadow-leaf-900/20 transition-all hover:bg-leaf-800 hover:shadow-lg hover:-translate-y-0.5">
           <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
           New Analysis
         </a>
@@ -38,7 +38,7 @@
 
     {% set persistence = record.get('persistence', {}) %}
     {% if persistence and not persistence.saved %}
-      <div class="no-print mt-6 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50/80 backdrop-blur px-5 py-3.5 text-sm text-amber-800 shadow-sm">
+      <div class="no-print mt-6 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50/80 backdrop-blur px-5 py-3.5 text-base text-amber-800 shadow-sm">
         <svg class="h-5 w-5 shrink-0 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
         <p>This result was not saved to Firestore ({{ persistence.error }}). It is shown from your session and will be lost when the browser closes.</p>
       </div>
@@ -60,12 +60,12 @@
           {% else %}
             <div class="flex h-64 flex-col items-center justify-center gap-3 text-soil-500">
               <svg class="h-12 w-12 opacity-50" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-              <p class="px-6 text-center text-sm">Image not stored<br><span class="text-xs opacity-75">{{ record.image.error }}</span></p>
+              <p class="px-6 text-center text-base">Image not stored<br><span class="text-sm opacity-75">{{ record.image.error }}</span></p>
             </div>
           {% endif %}
           
           <div class="absolute right-4 top-4">
-             <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest text-white shadow-lg backdrop-blur-md border border-white/20
+             <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-bold uppercase tracking-widest text-white shadow-lg backdrop-blur-md border border-white/20
                           {{ 'bg-red-500/80' if record.status == 'rejected' else 'bg-leaf-600/80' }}">
                <span class="relative flex h-2 w-2">
                  <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75"></span>
@@ -77,9 +77,9 @@
         </div>
         
         <div class="px-5 py-4 bg-gradient-to-b from-white to-soil-50">
-          <p class="truncate text-sm font-semibold text-soil-800" title="{{ record.filename }}">{{ record.filename }}</p>
+          <p class="truncate text-base font-semibold text-soil-800" title="{{ record.filename }}">{{ record.filename }}</p>
           {% if record.image.uploaded %}
-            <p class="mt-1 text-xs text-soil-500 flex items-center gap-2">
+            <p class="mt-1 text-sm text-soil-500 flex items-center gap-2">
               <span>{{ record.image.width }}&times;{{ record.image.height }}</span>
               <span class="h-1 w-1 rounded-full bg-soil-300"></span>
               <span>{{ (record.image.bytes / 1024)|round|int }} KB</span>
@@ -89,21 +89,22 @@
       </div>
 
       <!-- Probability distribution -->
+      {% if prediction %}
       <div class="print-block rounded-3xl border border-soil-100 bg-white p-6 shadow-xl shadow-soil-200/40">
         <div class="flex items-center gap-3 border-b border-soil-100 pb-4">
           <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-leaf-50 text-leaf-600">
             <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
           </div>
           <div>
-            <h2 class="text-sm font-bold text-soil-900">Class probabilities</h2>
-            <p class="text-[11px] text-soil-500">Softmax distribution across {{ prediction.ranked|length }} classes</p>
+            <h2 class="text-base font-bold text-soil-900">Class probabilities</h2>
+            <p class="text-sm text-soil-500">Softmax distribution across {{ prediction.ranked|length }} classes</p>
           </div>
         </div>
         
         <ul class="mt-5 space-y-4">
           {% for entry in prediction.ranked %}
             <li class="group">
-              <div class="flex items-baseline justify-between gap-2 text-xs mb-1.5">
+              <div class="flex items-baseline justify-between gap-2 text-sm mb-1.5">
                 <span class="truncate {{ 'font-bold text-soil-900' if loop.first else 'font-medium text-soil-600 group-hover:text-soil-800 transition-colors' }}" title="{{ entry.class_name }}">{{ entry.class_name|shortclass }}</span>
                 <span class="shrink-0 font-mono {{ 'font-bold text-leaf-600' if loop.first else 'text-soil-500' }}">{{ '%.2f'|format(entry.percentage) }}%</span>
               </div>
@@ -116,13 +117,15 @@
         </ul>
         <div class="mt-6 rounded-xl bg-soil-50 p-4 border border-soil-100">
            <div class="flex items-center justify-between">
-             <span class="text-xs font-semibold text-soil-700">Top-2 Margin</span>
-             <span class="font-mono text-sm font-bold text-soil-900">{{ '%.4f'|format(prediction.margin) }}</span>
+             <span class="text-sm font-semibold text-soil-700">Top-2 Margin</span>
+             <span class="font-mono text-base font-bold text-soil-900">{{ '%.4f'|format(prediction.margin) }}</span>
            </div>
-           <p class="mt-1 text-[11px] leading-relaxed text-soil-500">The gap between the first and second class, monitored by the OOD margin signal.</p>
+           <p class="mt-1 text-sm leading-relaxed text-soil-500">The gap between the first and second class, monitored by the OOD margin signal.</p>
         </div>
       </div>
-    </div>
+      {% endif %}
+
+      </div>
 
     <!-- ==================== Right column: the verdict ==================== -->
     <div class="space-y-8 lg:col-span-8">
@@ -137,24 +140,24 @@
               <svg class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
             </div>
             <div class="min-w-0 flex-1">
-              <h2 class="text-3xl font-extrabold tracking-tight text-red-950">{{ record.rejection.title }}</h2>
-              <p class="mt-2 text-base leading-relaxed text-red-800">{{ record.rejection.message }}</p>
+              <h2 class="text-4xl font-extrabold tracking-tight text-red-950">{{ record.rejection.title }}</h2>
+              <p class="mt-2 text-lg leading-relaxed text-red-800">{{ record.rejection.message }}</p>
             </div>
           </div>
 
           <div class="relative z-10 mt-8 grid gap-6 md:grid-cols-2">
             <div class="rounded-2xl border border-red-100 bg-white p-6 shadow-sm">
-              <h3 class="text-sm font-bold text-soil-900">No pest was named</h3>
-              <p class="mt-2 text-[13px] leading-relaxed text-soil-600">
+              <h3 class="text-base font-bold text-soil-900">No pest was named</h3>
+              <p class="mt-2 text-base leading-relaxed text-soil-600">
                 A closed-set classifier always returns one of its ten classes, however unrelated the input. Suppressing the answer here is the correct behaviour to prevent misleading identities.
               </p>
             </div>
 
             <div class="rounded-2xl border border-red-100 bg-white p-6 shadow-sm">
-              <h3 class="text-sm font-bold text-red-900">What to try next</h3>
+              <h3 class="text-base font-bold text-red-900">What to try next</h3>
               <ul class="mt-3 space-y-2.5">
                 {% for tip in record.rejection.guidance %}
-                  <li class="flex items-start gap-2 text-[13px] leading-relaxed text-red-800">
+                  <li class="flex items-start gap-2 text-base leading-relaxed text-red-800">
                     <svg class="mt-0.5 h-4 w-4 shrink-0 text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
                     {{ tip }}
                   </li>
@@ -164,22 +167,24 @@
           </div>
         </div>
 
+        {% if prediction %}
         <div class="print-block rounded-3xl border border-soil-200 bg-white p-6 shadow-lg shadow-soil-100/50">
           <div class="flex items-center justify-between">
             <div>
-              <h3 class="text-sm font-bold text-soil-900">Suppressed AI Output</h3>
-              <p class="text-[12px] text-soil-500">What the model predicted before OOD rejection.</p>
+              <h3 class="text-base font-bold text-soil-900">Suppressed AI Output</h3>
+              <p class="text-sm text-soil-500">What the model predicted before OOD rejection.</p>
             </div>
-            <span class="rounded-full bg-soil-100 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-soil-500">For transparency</span>
+            <span class="rounded-full bg-soil-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-soil-500">For transparency</span>
           </div>
           <div class="mt-4 flex items-center justify-between rounded-2xl border border-dashed border-soil-300 bg-soil-50/50 p-5">
             <div class="flex items-center gap-3">
               <svg class="h-5 w-5 text-soil-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
-              <span class="text-sm font-semibold text-soil-600 line-through">{{ prediction.class_name|shortclass }}</span>
+              <span class="text-base font-semibold text-soil-600 line-through">{{ prediction.class_name|shortclass }}</span>
             </div>
-            <span class="font-mono text-sm font-bold text-soil-400">{{ prediction.confidence_percentage }}%</span>
+            <span class="font-mono text-base font-bold text-soil-400">{{ prediction.confidence_percentage }}%</span>
           </div>
         </div>
+        {% endif %}
 
       {% else %}
         <!-- ---------------- ACCEPTED ---------------- -->
@@ -194,30 +199,30 @@
             <div class="relative z-10 flex flex-wrap items-center justify-between gap-6">
               <div class="min-w-0 max-w-xl">
                 <div class="flex items-center gap-2">
-                  <span class="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-white backdrop-blur-sm">
+                  <span class="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-2.5 py-1 text-xs font-bold uppercase tracking-widest text-white backdrop-blur-sm">
                     <svg class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                     Positively Identified
                   </span>
                   {% if pest.profile and pest.profile.pest_group %}
-                    <span class="inline-flex items-center rounded-full bg-black/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-leaf-100 backdrop-blur-sm">{{ pest.profile.pest_group }}</span>
+                    <span class="inline-flex items-center rounded-full bg-black/20 px-2.5 py-1 text-xs font-bold uppercase tracking-widest text-leaf-100 backdrop-blur-sm">{{ pest.profile.pest_group }}</span>
                   {% endif %}
                 </div>
-                <h2 class="mt-4 text-4xl font-extrabold tracking-tight drop-shadow-sm sm:text-5xl">{{ pest.display_name }}</h2>
+                <h2 class="mt-4 text-5xl font-extrabold tracking-tight drop-shadow-sm sm:text-6xl">{{ pest.display_name }}</h2>
                 {% if pest.scientific_name %}
-                  <p class="mt-2 text-lg italic text-leaf-100/90 font-light">{{ pest.scientific_name }}</p>
+                  <p class="mt-2 text-xl italic text-leaf-100/90 font-light">{{ pest.scientific_name }}</p>
                 {% endif %}
               </div>
 
               <div class="w-full shrink-0 rounded-2xl bg-white/10 p-5 backdrop-blur-md border border-white/10 shadow-xl sm:w-56 transition-transform hover:scale-105 duration-300">
-                <p class="text-[11px] font-bold uppercase tracking-widest text-leaf-200">Model Confidence</p>
+                <p class="text-sm font-bold uppercase tracking-widest text-leaf-200">Model Confidence</p>
                 <div class="mt-1 flex items-baseline gap-1">
-                  <span class="text-4xl font-black tracking-tight text-white">{{ prediction.confidence_percentage }}</span>
-                  <span class="text-xl font-bold text-leaf-200">%</span>
+                  <span class="text-5xl font-black tracking-tight text-white">{{ prediction.confidence_percentage }}</span>
+                  <span class="text-2xl font-bold text-leaf-200">%</span>
                 </div>
                 <div class="mt-3 h-2 w-full overflow-hidden rounded-full bg-black/20 inset-shadow-sm">
                   <div class="meter-fill h-full rounded-full bg-gradient-to-r from-corn-400 to-white shadow-[0_0_10px_rgba(255,255,255,0.5)]" style="width:0%" data-meter="{{ prediction.confidence_percentage }}"></div>
                 </div>
-                <p class="mt-2 text-xs font-semibold text-leaf-100 flex items-center gap-1.5">
+                <p class="mt-2 text-sm font-semibold text-leaf-100 flex items-center gap-1.5">
                   <span class="h-1.5 w-1.5 rounded-full bg-corn-400 animate-pulse"></span>
                   {{ prediction.confidence_band }} confidence
                 </p>
@@ -227,7 +232,7 @@
 
           <!-- Validation Meta -->
           <div class="bg-soil-50/50 px-8 py-5 border-b border-soil-100 flex flex-wrap items-center justify-between gap-4">
-            <div class="flex flex-wrap items-center gap-x-8 gap-y-3 text-xs">
+            <div class="flex flex-wrap items-center gap-x-8 gap-y-3 text-sm">
               <div class="flex items-center gap-2">
                 <div class="flex h-6 w-6 items-center justify-center rounded-full bg-leaf-100 text-leaf-600">
                   <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -236,11 +241,11 @@
               </div>
               <div class="flex items-center gap-2 text-soil-600">
                 <svg class="h-4 w-4 text-soil-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
-                AI class: <span class="rounded bg-white border border-soil-200 px-1.5 py-0.5 font-mono text-[10px] font-bold text-soil-800">{{ pest.ai_class }}</span>
+                AI class: <span class="rounded bg-white border border-soil-200 px-1.5 py-0.5 font-mono text-xs font-bold text-soil-800">{{ pest.ai_class }}</span>
               </div>
             </div>
             {% if pest.profile %}
-              <a href="{{ url_for('main.pest_detail', slug=pest.profile.slug) }}" class="no-print inline-flex items-center gap-1.5 rounded-lg bg-white border border-soil-200 px-3 py-1.5 text-xs font-bold text-leaf-700 shadow-sm hover:bg-leaf-50 hover:border-leaf-200 transition-colors">
+              <a href="{{ url_for('main.pest_detail', slug=pest.profile.slug) }}" class="no-print inline-flex items-center gap-1.5 rounded-lg bg-white border border-soil-200 px-3 py-1.5 text-sm font-bold text-leaf-700 shadow-sm hover:bg-leaf-50 hover:border-leaf-200 transition-colors">
                 View Full KB Entry
                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
               </a>
@@ -248,116 +253,182 @@
           </div>
           {% if pest.aliases %}
             <div class="px-8 py-3 bg-white border-b border-soil-100">
-              <p class="text-[11px] text-soil-500"><span class="font-semibold uppercase tracking-wider text-soil-400">Also known as:</span> {{ pest.aliases|join(', ') }}</p>
+              <p class="text-sm text-soil-500"><span class="font-semibold uppercase tracking-wider text-soil-400">Also known as:</span> {{ pest.aliases|join(', ') }}</p>
             </div>
           {% endif %}
         </div>
 
         {% if pest.profile %}
           <!-- Premium Pest Details Section -->
-          <div class="mt-8 space-y-6">
-            <h3 class="text-xl font-extrabold text-soil-900 px-2">Management & Analysis</h3>
+          <div class="mt-12 space-y-8">
+            <div class="flex items-center gap-4 px-2">
+              <div class="h-8 w-1.5 rounded-full bg-leaf-500"></div>
+              <h3 class="text-3xl font-black text-soil-900 tracking-tight">Management &amp; Analysis</h3>
+            </div>
             
-            <div class="grid gap-6 md:grid-cols-2">
-              <!-- Damage symptoms -->
+            <!-- Top Summary Rectangle -->
+            <div class="rounded-3xl border border-soil-200 bg-white shadow-lg shadow-soil-200/30 overflow-hidden flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-soil-100 transition-all hover:shadow-xl">
+              <!-- Pest Common Name -->
+              <div class="p-6 md:px-8 flex-1 flex flex-col justify-center">
+                <p class="text-[10px] font-black uppercase tracking-widest text-soil-400 mb-1">Pest Common Name</p>
+                <h4 class="text-xl font-bold text-soil-900">{{ pest.display_name }}</h4>
+              </div>
+              
+              <!-- Scientific Name -->
+              {% if pest.scientific_name %}
+              <div class="p-6 md:px-8 flex-1 flex flex-col justify-center bg-soil-50/30">
+                <p class="text-[10px] font-black uppercase tracking-widest text-soil-400 mb-1">Scientific Name</p>
+                <h4 class="text-lg font-medium italic text-soil-800">{{ pest.scientific_name }}</h4>
+              </div>
+              {% endif %}
+              
+              <!-- Pest Group -->
+              {% if pest.profile and pest.profile.pest_group %}
+              <div class="p-6 md:px-8 flex-1 flex flex-col justify-center">
+                <p class="text-[10px] font-black uppercase tracking-widest text-soil-400 mb-1">Pest Group</p>
+                <h4 class="text-lg font-semibold text-soil-800">{{ pest.profile.pest_group }}</h4>
+              </div>
+              {% endif %}
+            </div>
+
+            <!-- First Row: Symptoms & Chemicals -->
+            <div class="grid gap-8">
+              
+              <!-- Major Damage Symptoms -->
               {% if pest.profile.damage_symptom_list or pest.profile.damage_symptoms %}
-                <div class="rounded-3xl border border-soil-100 bg-white p-7 shadow-lg shadow-soil-200/30 flex flex-col h-full">
-                  <div class="flex items-center gap-3 mb-5">
-                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-                      <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                <div class="rounded-3xl border border-soil-200 bg-white shadow-xl shadow-soil-200/40 overflow-hidden flex flex-col md:flex-row h-full transition-all hover:shadow-2xl">
+                  <div class="bg-amber-50/80 px-6 py-5 border-b md:border-b-0 md:border-r border-amber-100 flex md:flex-col items-center gap-4 md:w-64 shrink-0 justify-center">
+                    <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-amber-600 shadow-sm border border-amber-200">
+                      <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                     </div>
-                    <div>
-                      <h3 class="text-base font-bold text-soil-900">Damage Symptoms</h3>
-                      <p class="text-[11px] text-soil-500 uppercase tracking-wide font-semibold">Field Confirmation</p>
+                    <div class="text-left md:text-center">
+                      <h3 class="text-xl font-bold text-amber-950">Major Damage Symptoms</h3>
+                      <p class="text-[10px] font-black uppercase tracking-widest text-amber-700 mt-1">Field Confirmation</p>
                     </div>
                   </div>
                   
-                  {% if pest.profile.damage_symptom_list %}
-                    <ul class="space-y-3 mt-auto">
-                      {% for symptom in pest.profile.damage_symptom_list %}
-                        <li class="flex items-start gap-3 rounded-xl bg-soil-50/70 p-3.5 text-[13px] leading-relaxed text-soil-700 transition-colors hover:bg-soil-100">
-                          <svg class="mt-0.5 h-4 w-4 shrink-0 text-amber-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                          {{ symptom }}
-                        </li>
-                      {% endfor %}
-                    </ul>
-                  {% else %}
-                    <p class="mt-2 text-[13px] leading-relaxed text-soil-700 bg-soil-50/70 p-4 rounded-xl">{{ pest.profile.damage_symptoms }}</p>
-                  {% endif %}
+                  <div class="p-6 md:p-8 grow flex flex-col justify-center">
+                    {% if pest.profile.damage_symptom_list %}
+                      <ul class="space-y-4">
+                        {% for symptom in pest.profile.damage_symptom_list %}
+                          <li class="flex items-start gap-4 p-4 rounded-2xl bg-soil-50 border border-soil-100 transition-all hover:bg-white hover:shadow-md hover:border-amber-200 group">
+                            <div class="mt-2 h-2 w-2 shrink-0 rounded-full bg-amber-400 group-hover:scale-150 transition-transform"></div>
+                            <span class="text-base font-medium leading-relaxed text-soil-800">{{ symptom }}</span>
+                          </li>
+                        {% endfor %}
+                      </ul>
+                    {% else %}
+                      <p class="text-lg leading-relaxed text-soil-700 p-4 rounded-2xl bg-soil-50 border border-soil-100">{{ pest.profile.damage_symptoms }}</p>
+                    {% endif %}
+                  </div>
                 </div>
               {% endif %}
 
-              <!-- Chemical control products -->
-              <div class="rounded-3xl border border-soil-100 bg-white p-7 shadow-lg shadow-soil-200/30 flex flex-col h-full">
-                <div class="flex items-center gap-3 mb-5">
-                  <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+              <!-- Chemical Controls -->
+              <div class="rounded-3xl border border-soil-200 bg-white shadow-xl shadow-soil-200/40 overflow-hidden flex flex-col md:flex-row h-full transition-all hover:shadow-2xl">
+                <div class="bg-violet-50/80 px-6 py-5 border-b md:border-b-0 md:border-r border-violet-100 flex md:flex-col items-center gap-4 md:w-64 shrink-0 justify-center">
+                  <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-violet-600 shadow-sm border border-violet-200">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
                   </div>
-                  <div>
-                    <h3 class="text-base font-bold text-soil-900">Chemical Controls</h3>
-                    <p class="text-[11px] text-soil-500 uppercase tracking-wide font-semibold">{{ pest.profile.active_ingredients|length }} Active Ingredients</p>
+                  <div class="text-left md:text-center">
+                    <h3 class="text-xl font-bold text-violet-950">Chemical Controls</h3>
+                    <p class="text-[10px] font-black uppercase tracking-widest text-violet-700 mt-1">Active Ingredients &amp; MOA</p>
                   </div>
                 </div>
 
-                {% if pest.profile.active_ingredients %}
-                  <div class="flex flex-wrap gap-2 mb-4">
-                    {% for ingredient in pest.profile.active_ingredients %}
-                      <span class="inline-flex items-center rounded-lg bg-violet-50 border border-violet-100 px-3 py-1.5 text-[12px] font-semibold text-violet-800 shadow-sm transition-transform hover:scale-105">
-                        {{ ingredient }}
-                      </span>
-                    {% endfor %}
+                <div class="p-6 md:p-8 grow flex flex-col justify-center gap-6">
+                  <!-- Label inside a box! -->
+                  <div class="rounded-2xl border border-soil-100 p-5 bg-soil-50/50">
+                    <h4 class="text-xs font-black uppercase tracking-widest text-soil-400 mb-4 flex items-center gap-3">
+                      <svg class="h-4 w-4 text-violet-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+                      Recommended Active Ingredients
+                    </h4>
+                    {% if pest.profile.active_ingredients %}
+                      <div class="flex flex-wrap gap-2.5">
+                        {% for ingredient in pest.profile.active_ingredients %}
+                          <span class="inline-flex items-center gap-2 rounded-xl bg-white border border-violet-200 px-4 py-2 text-sm font-bold text-violet-900 shadow-sm transition-transform hover:scale-105 hover:border-violet-400">
+                            {{ ingredient }}
+                          </span>
+                        {% endfor %}
+                      </div>
+                    {% else %}
+                      <p class="text-base font-medium text-soil-500 italic">No chemical products listed.</p>
+                    {% endif %}
                   </div>
-                {% else %}
-                  <div class="flex-1 flex items-center justify-center rounded-xl border border-dashed border-soil-200 bg-soil-50">
-                    <p class="text-sm text-soil-500">No chemical products listed.</p>
-                  </div>
-                {% endif %}
 
-                {% if pest.profile.moa_raw %}
-                  <div class="mt-auto rounded-xl bg-soil-900 p-4 text-white">
-                    <p class="text-[10px] font-bold uppercase tracking-wider text-soil-400 mb-1">Mode of Action</p>
-                    <p class="text-[13px] leading-relaxed font-medium">{{ pest.profile.moa_raw }}</p>
-                  </div>
-                {% endif %}
+                  {% if pest.profile.moa_raw %}
+                    <div class="rounded-2xl border border-soil-100 p-5 bg-soil-900 text-white shadow-inner">
+                      <h4 class="text-xs font-black uppercase tracking-widest text-soil-400 mb-2">IRAC Mode of Action</h4>
+                      <p class="text-base leading-relaxed font-semibold text-soil-50">{{ pest.profile.moa_raw }}</p>
+                    </div>
+                  {% endif %}
+                </div>
               </div>
             </div>
 
-            <!-- IPM and Biologicals Grid -->
-            <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <!-- Second Row: Biological & IPM Guidelines Grid -->
+            <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              
               {% if pest.profile.biological_controls %}
-                <div class="rounded-3xl border border-emerald-100 bg-gradient-to-b from-emerald-50 to-white p-6 shadow-lg shadow-emerald-100/50 md:col-span-2">
-                  <div class="flex items-center gap-2 mb-4">
-                    <svg class="h-5 w-5 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18m0-18C9 6 6 6.5 4 8c0 6 3.5 10 8 13 4.5-3 8-7 8-13-2-1.5-5-2-8-5z"/></svg>
-                    <h3 class="text-sm font-bold text-emerald-900">Biological Agents</h3>
+                <!-- Biological Control Options -->
+                <div class="rounded-3xl border border-emerald-200 bg-white shadow-xl shadow-soil-200/40 overflow-hidden lg:col-span-3">
+                  <div class="bg-emerald-50/80 px-6 py-4 border-b border-emerald-100 flex items-center gap-3">
+                    <svg class="h-6 w-6 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18m0-18C9 6 6 6.5 4 8c0 6 3.5 10 8 13 4.5-3 8-7 8-13-2-1.5-5-2-8-5z"/></svg>
+                    <h3 class="text-xl font-bold text-emerald-950">Biological Control Options</h3>
                   </div>
-                  <ul class="grid gap-2 sm:grid-cols-2">
-                    {% for agent in pest.profile.biological_controls %}
-                      <li class="rounded-xl bg-white border border-emerald-100 p-3 text-[13px] font-medium text-emerald-800 shadow-sm flex items-center gap-2">
-                         <div class="h-1.5 w-1.5 rounded-full bg-emerald-400"></div>
-                         {{ agent }}
-                      </li>
-                    {% endfor %}
-                  </ul>
+                  <div class="p-6 bg-white">
+                    <ul class="flex flex-wrap gap-4">
+                      {% for agent in pest.profile.biological_controls %}
+                        <li class="flex items-center gap-3 rounded-2xl bg-emerald-50 border border-emerald-200 px-5 py-3 text-base font-bold text-emerald-900 shadow-sm transition-transform hover:scale-105">
+                           <div class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                           {{ agent }}
+                        </li>
+                      {% endfor %}
+                    </ul>
+                  </div>
                 </div>
               {% endif %}
 
+              <!-- Treatment Guideline as a full-width rectangle -->
+              {% if pest.profile.treatment_guideline %}
+                <div class="rounded-3xl border border-indigo-200 bg-white shadow-xl shadow-soil-200/40 overflow-hidden lg:col-span-3 flex flex-col md:flex-row transition-all hover:shadow-2xl">
+                  <div class="bg-indigo-50/80 px-6 py-5 border-b md:border-b-0 md:border-r border-indigo-100 flex md:flex-col items-center gap-4 md:w-64 shrink-0 justify-center">
+                    <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-indigo-600 shadow-sm border border-indigo-200">
+                      <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                    </div>
+                    <div class="text-left md:text-center">
+                      <h3 class="text-xl font-bold text-indigo-950">Treatment Guideline</h3>
+                      <p class="text-[10px] font-black uppercase tracking-widest text-indigo-600 mt-1">Thresholds</p>
+                    </div>
+                  </div>
+                  <div class="p-6 md:p-8 bg-white grow flex items-center">
+                    <p class="text-lg leading-relaxed font-medium text-soil-700">{{ pest.profile.treatment_guideline }}</p>
+                  </div>
+                </div>
+              {% endif %}
+
+              <!-- Remaining IPM Guidelines -->
               {% set guidance_blocks = [
-                ('IPM Strategy', pest.profile.ipm_recommendation, 'sky', 'M13 10V3L4 14h7v7l9-11h-7z'),
-                ('Treatment Guide', pest.profile.treatment_guideline, 'indigo', 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'),
-                ('Timing', pest.profile.application_timing, 'corn', 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'),
-                ('Environment', pest.profile.environmental_consideration, 'teal', 'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z')
+                ('IPM Recommendation', pest.profile.ipm_recommendation, 'sky', 'M13 10V3L4 14h7v7l9-11h-7z', 'Integrated Management'),
+                ('Application Timing', pest.profile.application_timing, 'corn', 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', 'When to apply'),
+                ('Environmental Consideration', pest.profile.environmental_consideration, 'teal', 'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z', 'Safety First')
               ] %}
               
-              {% for heading, body, tone, icon_path in guidance_blocks %}
+              {% for heading, body, tone, icon_path, subtitle in guidance_blocks %}
                 {% if body %}
-                  <div class="rounded-3xl border border-{{ tone }}-100 bg-white p-6 shadow-lg shadow-soil-200/30 flex flex-col md:col-span-1 lg:col-span-2">
-                    <div class="flex items-center gap-2 mb-3">
-                      <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-{{ tone }}-50 text-{{ tone }}-600">
-                         <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ icon_path }}"/></svg>
+                  <div class="rounded-3xl border border-soil-200 bg-white shadow-lg shadow-soil-200/30 overflow-hidden flex flex-col transition-all hover:shadow-xl hover:-translate-y-1 duration-300">
+                    <div class="bg-{{ tone }}-50/60 px-5 py-4 border-b border-{{ tone }}-100 flex items-center gap-3">
+                      <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-{{ tone }}-600 shadow-sm border border-{{ tone }}-200">
+                         <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ icon_path }}"/></svg>
                       </div>
-                      <h3 class="text-sm font-bold text-soil-900">{{ heading }}</h3>
+                      <div>
+                        <h3 class="text-lg font-bold text-soil-900">{{ heading }}</h3>
+                        <p class="text-[10px] font-black uppercase tracking-widest text-{{ tone }}-600">{{ subtitle }}</p>
+                      </div>
                     </div>
-                    <p class="text-[13px] leading-relaxed text-soil-600 mt-auto">{{ body }}</p>
+                    <div class="p-6 bg-white grow flex flex-col justify-center">
+                      <p class="text-base font-medium leading-relaxed text-soil-700">{{ body }}</p>
+                    </div>
                   </div>
                 {% endif %}
               {% endfor %}
@@ -368,7 +439,7 @@
 
       <!-- ==================== System Diagnostics Section ==================== -->
       <div class="mt-12 space-y-6">
-        <h3 class="text-xl font-extrabold text-soil-900 px-2 border-t border-soil-200 pt-8">System Diagnostics</h3>
+        <h3 class="text-2xl font-extrabold text-soil-900 px-2 border-t border-soil-200 pt-8">System Diagnostics</h3>
         
         <!-- OOD panel -->
         <div class="print-block rounded-3xl border border-soil-200 bg-white shadow-xl shadow-soil-200/40 overflow-hidden">
@@ -378,33 +449,33 @@
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
               </div>
               <div>
-                <h2 class="text-lg font-bold tracking-tight text-soil-900">Out-of-Distribution Analysis</h2>
-                <p class="text-xs text-soil-500 mt-0.5">
-                  {{ ood.votes }} of {{ ood.signals|length }} signals flagged &middot; Threshold is {{ ood.votes_required }}
+                <h2 class="text-xl font-bold tracking-tight text-soil-900">Out-of-Distribution Analysis</h2>
+                <p class="text-sm text-soil-500 mt-0.5">
+                  {{ ood.votes }} of {{ ood.signals|length }} signals flagged &middot; Rejection threshold: {{ ood.votes_required }} signal{{ 's' if ood.votes_required != 1 else '' }}
                 </p>
               </div>
             </div>
-            <span class="rounded-xl px-4 py-2 text-xs font-bold uppercase tracking-wider border shadow-sm
+            <span class="rounded-xl px-4 py-2 text-sm font-bold uppercase tracking-wider border shadow-sm
                          {{ 'bg-red-50 border-red-200 text-red-700' if ood.is_ood else 'bg-leaf-50 border-leaf-200 text-leaf-700' }}">
               {{ 'Rejected as unknown' if ood.is_ood else 'Distribution Verified' }}
             </span>
           </div>
 
           <div class="p-6">
-            <p class="rounded-xl bg-soil-50 border border-soil-100 p-4 text-[13px] font-medium leading-relaxed text-soil-700">{{ ood.reason }}</p>
+            <p class="rounded-xl bg-soil-50 border border-soil-100 p-4 text-base font-medium leading-relaxed text-soil-700">{{ ood.reason }}</p>
 
             <!-- Relevance gate -->
             {% if ood.relevance and ood.relevance.available %}
               <div class="mt-8">
                 <div class="flex items-center justify-between gap-4 mb-4">
-                  <h3 class="text-xs font-bold uppercase tracking-widest text-soil-400">Stage 1 &mdash; Relevance Gate</h3>
-                  <span class="rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider border {{ 'bg-leaf-50 border-leaf-200 text-leaf-700' if ood.relevance.passed else 'bg-red-50 border-red-200 text-red-700' }}">
+                  <h3 class="text-sm font-bold uppercase tracking-widest text-soil-400">Stage 1 &mdash; Relevance Gate</h3>
+                  <span class="rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider border {{ 'bg-leaf-50 border-leaf-200 text-leaf-700' if ood.relevance.passed else 'bg-red-50 border-red-200 text-red-700' }}">
                     {{ 'Passed' if ood.relevance.passed else 'Failed' }}
                   </span>
                 </div>
                 
                 <div class="rounded-2xl border border-soil-100 p-5 bg-white shadow-sm">
-                  <div class="flex items-center justify-between text-xs mb-2">
+                  <div class="flex items-center justify-between text-sm mb-2">
                     <span class="text-soil-600 font-medium">Probability mass on insect/plant classes</span>
                     <span class="font-mono font-bold text-soil-900">{{ '%.4f'|format(ood.relevance.score) }} <span class="text-soil-400 font-normal">/ &ge; {{ ood.relevance.threshold }}</span></span>
                   </div>
@@ -416,13 +487,13 @@
 
                   {% if ood.relevance.labels %}
                     <div class="mt-4 pt-4 border-t border-soil-100">
-                      <p class="text-[10px] font-bold uppercase tracking-wider text-soil-400 mb-2">ImageNet Predictions</p>
+                      <p class="text-xs font-bold uppercase tracking-wider text-soil-400 mb-2">ImageNet Predictions</p>
                       <div class="flex flex-wrap gap-2">
                         {% for label in ood.relevance.labels %}
-                          <span class="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-medium shadow-sm transition-transform hover:scale-105
+                          <span class="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-sm font-medium shadow-sm transition-transform hover:scale-105
                                        {{ 'border-leaf-200 bg-leaf-50 text-leaf-800' if label.relevant else 'border-soil-200 bg-white text-soil-600' }}">
                             {{ label.label }}
-                            <span class="font-mono text-[10px] opacity-60 ml-1">{{ '%.1f'|format(label.probability * 100) }}%</span>
+                            <span class="font-mono text-xs opacity-60 ml-1">{{ '%.1f'|format(label.probability * 100) }}%</span>
                           </span>
                         {% endfor %}
                       </div>
@@ -433,27 +504,28 @@
             {% endif %}
 
             <!-- Distributional signals -->
+            {% if ood.signals %}
             <div class="mt-8">
-              <h3 class="text-xs font-bold uppercase tracking-widest text-soil-400 mb-4">Stage 2 &mdash; Distributional Signals</h3>
+              <h3 class="text-sm font-bold uppercase tracking-widest text-soil-400 mb-4">Stage 2 &mdash; Distributional Signals</h3>
               <div class="grid gap-4 sm:grid-cols-2">
                 {% for signal in ood.signals %}
                   <div class="rounded-2xl border p-5 transition-shadow hover:shadow-md {{ 'border-red-200 bg-red-50/30' if signal.flagged else 'border-soil-100 bg-white' }}">
                     <div class="flex items-start justify-between gap-4 mb-3">
                       <div class="flex items-center gap-2">
-                        <span class="flex h-6 w-8 items-center justify-center rounded-lg bg-soil-800 font-mono text-[10px] font-bold text-white shadow-inner">{{ signal.abbreviation }}</span>
-                        <h4 class="text-sm font-bold text-soil-900">{{ signal.name }}</h4>
+                        <span class="flex h-6 w-8 items-center justify-center rounded-lg bg-soil-800 font-mono text-xs font-bold text-white shadow-inner">{{ signal.abbreviation }}</span>
+                        <h4 class="text-base font-bold text-soil-900">{{ signal.name }}</h4>
                       </div>
-                      <span class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border {{ 'bg-red-50 border-red-200 text-red-700' if signal.flagged else 'bg-leaf-50 border-leaf-200 text-leaf-600' }}">
+                      <span class="rounded-full px-2 py-0.5 text-xs font-bold uppercase tracking-wider border {{ 'bg-red-50 border-red-200 text-red-700' if signal.flagged else 'bg-leaf-50 border-leaf-200 text-leaf-600' }}">
                         {{ 'Flagged' if signal.flagged else 'Passed' }}
                       </span>
                     </div>
-                    <p class="text-[12px] leading-relaxed text-soil-600 mb-4">{{ signal.description }}</p>
+                    <p class="text-sm leading-relaxed text-soil-600 mb-4">{{ signal.description }}</p>
                     <div class="mt-auto flex items-end justify-between pt-3 border-t {{ 'border-red-200/50' if signal.flagged else 'border-soil-100' }}">
-                      <div class="text-[10px] text-soil-400 font-medium">
+                      <div class="text-xs text-soil-400 font-medium">
                         {{ signal.rule }} &middot; {{ signal.reference }}
                       </div>
                       <div class="text-right">
-                        <p class="font-mono text-sm font-bold {{ 'text-red-600' if signal.flagged else 'text-leaf-600' }}">{{ signal.value }}</p>
+                        <p class="font-mono text-base font-bold {{ 'text-red-600' if signal.flagged else 'text-leaf-600' }}">{{ signal.value }}</p>
                         <p class="font-mono text-[9px] uppercase tracking-wider text-soil-400">vs {{ signal.threshold }}</p>
                       </div>
                     </div>
@@ -461,14 +533,15 @@
                 {% endfor %}
               </div>
             </div>
+            {% endif %}
           </div>
         </div>
 
         <!-- Pipeline trace -->
         <div class="print-block rounded-3xl border border-soil-200 bg-white shadow-xl shadow-soil-200/40 p-1">
           <div class="px-6 py-5 border-b border-soil-100">
-            <h2 class="text-base font-bold tracking-tight text-soil-900">Execution Trace</h2>
-            <p class="text-xs text-soil-500 mt-1">End-to-end component lifecycle.</p>
+            <h2 class="text-lg font-bold tracking-tight text-soil-900">Execution Trace</h2>
+            <p class="text-sm text-soil-500 mt-1">End-to-end component lifecycle.</p>
           </div>
           <div class="px-2 py-2">
             <ol class="relative border-l border-soil-200 ml-6 my-4 space-y-6">
@@ -477,14 +550,14 @@
                 <li class="pl-6 relative group">
                   <span class="absolute flex items-center justify-center w-6 h-6 rounded-full -left-3 ring-4 ring-white shadow-sm transition-transform group-hover:scale-110
                                {{ 'bg-soil-100 text-soil-400' if skipped else 'bg-leaf-100 text-leaf-600' }}">
-                    <span class="text-[10px] font-bold">{{ loop.index }}</span>
+                    <span class="text-xs font-bold">{{ loop.index }}</span>
                   </span>
                   <div class="bg-soil-50/50 rounded-xl p-4 border border-soil-100 transition-colors group-hover:bg-soil-50 {{ 'opacity-60' if skipped }}">
                     <div class="flex items-center gap-2 mb-1">
-                      <h3 class="text-sm font-bold text-soil-900">{{ step.stage }}</h3>
-                      <span class="rounded-full bg-white px-2 py-0.5 text-[10px] font-mono font-medium text-soil-500 border border-soil-200">{{ step.component }}</span>
+                      <h3 class="text-base font-bold text-soil-900">{{ step.stage }}</h3>
+                      <span class="rounded-full bg-white px-2 py-0.5 text-xs font-mono font-medium text-soil-500 border border-soil-200">{{ step.component }}</span>
                     </div>
-                    <p class="text-[13px] leading-relaxed {{ 'italic text-soil-500' if skipped else 'text-soil-700' }}">{{ step.outcome }}</p>
+                    <p class="text-base leading-relaxed {{ 'italic text-soil-500' if skipped else 'text-soil-700' }}">{{ step.outcome }}</p>
                   </div>
                 </li>
               {% endfor %}
@@ -492,7 +565,6 @@
           </div>
         </div>
       </div>
-
     </div>
   </div>
 </div>

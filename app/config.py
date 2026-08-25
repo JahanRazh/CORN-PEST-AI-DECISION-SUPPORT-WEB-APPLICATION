@@ -67,7 +67,7 @@ OOD_DEFAULTS = {
     "feature_distance_threshold": 0.75,
     # Number of individual OOD signals that must fire before the image is
     # rejected as Unknown.
-    "votes_required": 2,
+    "votes_required": 1,
 }
 
 # Relevance gate ------------------------------------------------------------
