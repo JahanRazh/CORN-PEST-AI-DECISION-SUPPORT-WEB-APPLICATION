@@ -442,8 +442,8 @@
         <h3 class="text-2xl font-extrabold text-soil-900 px-2 border-t border-soil-200 pt-8">System Diagnostics</h3>
         
         <!-- OOD panel -->
-        <div class="print-block rounded-3xl border border-soil-200 bg-white shadow-xl shadow-soil-200/40 overflow-hidden">
-          <div class="bg-soil-50/80 px-6 py-5 border-b border-soil-200 flex flex-wrap items-center justify-between gap-4">
+        <details class="print-block group rounded-3xl border border-soil-200 bg-white shadow-xl shadow-soil-200/40 overflow-hidden">
+          <summary class="bg-soil-50/80 px-6 py-5 border-b border-soil-200 flex flex-wrap items-center justify-between gap-4 cursor-pointer hover:bg-soil-100 transition-colors list-none [&::-webkit-details-marker]:hidden">
             <div class="flex items-center gap-4">
               <div class="grid h-12 w-12 place-items-center rounded-2xl shadow-inner border {{ 'bg-red-50 border-red-200 text-red-600' if ood.is_ood else 'bg-white border-soil-200 text-leaf-600' }}">
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
@@ -455,11 +455,16 @@
                 </p>
               </div>
             </div>
-            <span class="rounded-xl px-4 py-2 text-sm font-bold uppercase tracking-wider border shadow-sm
-                         {{ 'bg-red-50 border-red-200 text-red-700' if ood.is_ood else 'bg-leaf-50 border-leaf-200 text-leaf-700' }}">
-              {{ 'Rejected as unknown' if ood.is_ood else 'Distribution Verified' }}
-            </span>
-          </div>
+            <div class="flex items-center gap-4">
+              <span class="rounded-xl px-4 py-2 text-sm font-bold uppercase tracking-wider border shadow-sm
+                           {{ 'bg-red-50 border-red-200 text-red-700' if ood.is_ood else 'bg-leaf-50 border-leaf-200 text-leaf-700' }}">
+                {{ 'Rejected as unknown' if ood.is_ood else 'Distribution Verified' }}
+              </span>
+              <div class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm border border-soil-200 transition-colors group-hover:bg-soil-50">
+                <svg class="h-4 w-4 text-soil-500 transition-transform duration-300 group-open:-rotate-180" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+              </div>
+            </div>
+          </summary>
 
           <div class="p-6">
             <p class="rounded-xl bg-soil-50 border border-soil-100 p-4 text-base font-medium leading-relaxed text-soil-700">{{ ood.reason }}</p>
@@ -535,15 +540,20 @@
             </div>
             {% endif %}
           </div>
-        </div>
+        </details>
 
         <!-- Pipeline trace -->
-        <div class="print-block rounded-3xl border border-soil-200 bg-white shadow-xl shadow-soil-200/40 p-1">
-          <div class="px-6 py-5 border-b border-soil-100">
-            <h2 class="text-lg font-bold tracking-tight text-soil-900">Execution Trace</h2>
-            <p class="text-sm text-soil-500 mt-1">End-to-end component lifecycle.</p>
-          </div>
-          <div class="px-2 py-2">
+        <details class="print-block group rounded-3xl border border-soil-200 bg-white shadow-xl shadow-soil-200/40 overflow-hidden">
+          <summary class="px-6 py-5 border-b border-soil-100 bg-soil-50/50 flex items-center justify-between cursor-pointer hover:bg-soil-100 transition-colors list-none [&::-webkit-details-marker]:hidden">
+            <div>
+              <h2 class="text-lg font-bold tracking-tight text-soil-900">Execution Trace</h2>
+              <p class="text-sm text-soil-500 mt-1">End-to-end component lifecycle.</p>
+            </div>
+            <div class="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm border border-soil-200 transition-colors group-hover:bg-soil-50">
+              <svg class="h-4 w-4 text-soil-500 transition-transform duration-300 group-open:-rotate-180" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </div>
+          </summary>
+          <div class="px-3 py-2">
             <ol class="relative border-l border-soil-200 ml-6 my-4 space-y-6">
               {% for step in record.trace %}
                 {% set skipped = step.outcome.startswith('Skipped') %}
@@ -563,7 +573,7 @@
               {% endfor %}
             </ol>
           </div>
-        </div>
+        </details>
       </div>
     </div>
   </div>
