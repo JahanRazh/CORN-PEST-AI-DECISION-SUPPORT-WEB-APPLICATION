@@ -3,7 +3,7 @@
 > **A research-grade AI web application that identifies corn pests from uploaded photographs and delivers expert-backed pesticide & IPM recommendations in seconds.**
 
 ---
-
+![alt text](image.png)
 ## 📌 Table of Contents
 
 1. [Project Overview](#-project-overview)
