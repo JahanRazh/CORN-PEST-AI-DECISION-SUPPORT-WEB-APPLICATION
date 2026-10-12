@@ -16,10 +16,8 @@ htmlcov/
 # --- Instance data (runtime state, uploads, local DB) ---
 instance/
 
-# --- Large model artifacts (regenerate with scripts/setup_artifacts.py) ---
-model/*.keras
+# --- Large model artifacts ---
 model/*.npz
-model/model_metrics.json
 model/model_metadata.json
 
 # --- Node (build-time only, for Tailwind CSS compilation) ---

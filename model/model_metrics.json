@@ -1,0 +1,288 @@
+{
+  "generated_at": "2026-08-10T15:39:03+00:00",
+  "source": "model/result/accuracy_report.txt",
+  "model": "EfficientNetB0 (transfer learning + fine tuning)",
+  "headline": {
+    "test_loss": 0.220728,
+    "accuracy": 93.95,
+    "precision": 94.02,
+    "recall": 93.95,
+    "f1_score": 93.93,
+    "num_classes": 10,
+    "image_size": "224 x 224"
+  },
+  "per_class": [
+    {
+      "class_name": "Army Worm-Spodoptera frugiperda",
+      "precision": 92.11,
+      "recall": 92.11,
+      "f1_score": 92.11,
+      "support": 152
+    },
+    {
+      "class_name": "Beet Army Worm-Spodoptera exigua",
+      "precision": 86.72,
+      "recall": 78.72,
+      "f1_score": 82.53,
+      "support": 141
+    },
+    {
+      "class_name": "Black Cut Worm-Agrotis ypsilon",
+      "precision": 77.5,
+      "recall": 92.54,
+      "f1_score": 84.35,
+      "support": 67
+    },
+    {
+      "class_name": "Corn Aphid-Rhopalosiphum maidis",
+      "precision": 97.4,
+      "recall": 96.77,
+      "f1_score": 97.09,
+      "support": 155
+    },
+    {
+      "class_name": "Corn Borer-Ostrinia furnacalis",
+      "precision": 94.16,
+      "recall": 94.85,
+      "f1_score": 94.51,
+      "support": 136
+    },
+    {
+      "class_name": "Corn Ear Worm-Helicoverpa armigera",
+      "precision": 95.93,
+      "recall": 97.52,
+      "f1_score": 96.72,
+      "support": 121
+    },
+    {
+      "class_name": "Corn Grasshopper-Oxya chinensis",
+      "precision": 100.0,
+      "recall": 100.0,
+      "f1_score": 100.0,
+      "support": 91
+    },
+    {
+      "class_name": "Flea Beetle-Phyllotreta spp",
+      "precision": 96.44,
+      "recall": 98.64,
+      "f1_score": 97.53,
+      "support": 220
+    },
+    {
+      "class_name": "White Grub-Holotrichia spp",
+      "precision": 96.23,
+      "recall": 95.63,
+      "f1_score": 95.92,
+      "support": 160
+    },
+    {
+      "class_name": "Wire Worm-Agriotes lineatus",
+      "precision": 95.02,
+      "recall": 92.51,
+      "f1_score": 93.75,
+      "support": 227
+    }
+  ],
+  "averages": {
+    "macro": {
+      "precision": 93.15,
+      "recall": 93.93,
+      "f1_score": 93.45,
+      "support": 1470
+    },
+    "weighted": {
+      "precision": 94.02,
+      "recall": 93.95,
+      "f1_score": 93.93,
+      "support": 1470
+    }
+  },
+  "confusion_matrix": [
+    [
+      140,
+      7,
+      0,
+      0,
+      3,
+      0,
+      0,
+      1,
+      0,
+      1
+    ],
+    [
+      4,
+      111,
+      9,
+      3,
+      1,
+      3,
+      0,
+      4,
+      1,
+      5
+    ],
+    [
+      0,
+      3,
+      62,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      2
+    ],
+    [
+      2,
+      1,
+      0,
+      150,
+      0,
+      0,
+      0,
+      2,
+      0,
+      0
+    ],
+    [
+      2,
+      0,
+      0,
+      1,
+      129,
+      2,
+      0,
+      0,
+      1,
+      1
+    ],
+    [
+      0,
+      2,
+      0,
+      0,
+      1,
+      118,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      91,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      2,
+      0,
+      0,
+      0,
+      0,
+      0,
+      217,
+      0,
+      1
+    ],
+    [
+      3,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      153,
+      1
+    ],
+    [
+      1,
+      1,
+      8,
+      0,
+      2,
+      0,
+      0,
+      1,
+      4,
+      210
+    ]
+  ],
+  "class_names": [
+    "Army Worm-Spodoptera frugiperda",
+    "Beet Army Worm-Spodoptera exigua",
+    "Black Cut Worm-Agrotis ypsilon",
+    "Corn Aphid-Rhopalosiphum maidis",
+    "Corn Borer-Ostrinia furnacalis",
+    "Corn Ear Worm-Helicoverpa armigera",
+    "Corn Grasshopper-Oxya chinensis",
+    "Flea Beetle-Phyllotreta spp",
+    "White Grub-Holotrichia spp",
+    "Wire Worm-Agriotes lineatus"
+  ],
+  "history": [
+    {
+      "epoch": 20.0,
+      "accuracy": 0.8087619543075562,
+      "learning_rate": 9.999999747378752e-06,
+      "loss": 0.5653544068336487,
+      "val_accuracy": 0.8799715638160706,
+      "val_loss": 0.3586617708206177
+    },
+    {
+      "epoch": 21.0,
+      "accuracy": 0.8395633697509766,
+      "learning_rate": 9.999999747378752e-06,
+      "loss": 0.47490113973617554,
+      "val_accuracy": 0.8700284361839294,
+      "val_loss": 0.3851005434989929
+    },
+    {
+      "epoch": 22.0,
+      "accuracy": 0.8567583560943604,
+      "learning_rate": 9.999999747378752e-06,
+      "loss": 0.42047473788261414,
+      "val_accuracy": 0.8707386255264282,
+      "val_loss": 0.37096989154815674
+    },
+    {
+      "epoch": 23.0,
+      "accuracy": 0.8706638813018799,
+      "learning_rate": 4.999999873689376e-06,
+      "loss": 0.39620441198349,
+      "val_accuracy": 0.8778409361839294,
+      "val_loss": 0.35639020800590515
+    },
+    {
+      "epoch": 24.0,
+      "accuracy": 0.8714115023612976,
+      "learning_rate": 4.999999873689376e-06,
+      "loss": 0.3779172897338867,
+      "val_accuracy": 0.8920454382896423,
+      "val_loss": 0.3249874413013458
+    },
+    {
+      "epoch": 25.0,
+      "accuracy": 0.880382776260376,
+      "learning_rate": 4.999999873689376e-06,
+      "loss": 0.3629034161567688,
+      "val_accuracy": 0.8821022510528564,
+      "val_loss": 0.3456580340862274
+    }
+  ],
+  "graphs": {
+    "accuracy": true,
+    "loss": true
+  }
+}
