@@ -131,10 +131,17 @@ def _init_firestore() -> None:
             import firebase_admin
             from firebase_admin import credentials, firestore
 
-            if not config.FIREBASE_CREDENTIALS_PATH.exists():
+            firebase_json = os.getenv("FIREBASE_CREDENTIALS_JSON")
+            if firebase_json:
+                import json
+                cred_dict = json.loads(firebase_json)
+                cred = credentials.Certificate(cred_dict)
+            elif config.FIREBASE_CREDENTIALS_PATH.exists():
+                cred = credentials.Certificate(str(config.FIREBASE_CREDENTIALS_PATH))
+            else:
                 raise FileNotFoundError(
-                    f"Firebase service account key not found at "
-                    f"{config.FIREBASE_CREDENTIALS_PATH}"
+                    f"Firebase credentials not found. Provide FIREBASE_CREDENTIALS_JSON "
+                    f"env variable or file at {config.FIREBASE_CREDENTIALS_PATH}"
                 )
 
             # initialize_app raises if called twice, which happens under the
@@ -142,7 +149,6 @@ def _init_firestore() -> None:
             try:
                 firebase_admin.get_app()
             except ValueError:
-                cred = credentials.Certificate(str(config.FIREBASE_CREDENTIALS_PATH))
                 firebase_admin.initialize_app(cred)
 
             _firestore_state["client"] = firestore.client()
